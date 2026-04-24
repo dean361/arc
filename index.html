@@ -1,0 +1,2966 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ARC 项目生态分析</title>
+<style>
+/* ============================================================
+   ARC Project Intelligence · v6.0
+   Tool-first dashboard · 真正可用的工作台
+============================================================ */
+:root{
+  /* Backgrounds */
+  --bg:        #f7f5ee;
+  --surface:   #ffffff;
+  --surface-2: #f0ede4;
+  --surface-3: #e6e2d5;
+
+  /* Text */
+  --text:    #18181a;
+  --text-2:  #4a4945;
+  --text-3:  #77756e;
+  --text-4:  #a8a59c;
+
+  /* Borders */
+  --border:        #e3e0d6;
+  --border-strong: #cfcbbd;
+
+  /* Accent · burnt orange (单一品牌色) */
+  --accent:        #c2410c;
+  --accent-2:      #ea580c;
+  --accent-bg:     #fef4e6;
+  --accent-border: #f3d4a0;
+
+  /* Status colors */
+  --green:   #15803d;
+  --green-bg:#ecfdf3;
+  --green-border:#a7e5c1;
+  --red:     #b91c1c;
+  --red-bg:  #fef2f2;
+  --red-border:#f4c4c4;
+  --blue:    #1e40af;
+  --blue-bg: #eff5ff;
+  --blue-border:#bfd1f3;
+  --purple:  #6d28d9;
+  --purple-bg:#f5efff;
+
+  /* Map heatmap (6 levels for ARC adoption strength) */
+  --m0: #ebe7da;
+  --m1: #d4cdb3;
+  --m2: #f3c994;
+  --m3: #e89a4d;
+  --m4: #c0651b;
+  --m5: #863e0e;
+
+  /* Effects */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+  --shadow:    0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.03);
+
+  /* Radii */
+  --r-sm: 4px;
+  --r:    6px;
+  --r-md: 8px;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Inter","Helvetica Neue",system-ui,sans-serif;
+  font-size:14px;
+  line-height:1.55;
+  letter-spacing:.005em;
+  font-feature-settings:"palt","tnum";
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:2px}
+::selection{background:var(--accent-bg)}
+
+/* ============ Layout · Wide dashboard ============ */
+.app{
+  display:grid;
+  grid-template-columns:228px 1fr;
+  min-height:100vh;
+}
+
+aside.sidebar{
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  padding:22px 14px;
+}
+aside .brand{margin-bottom:20px;padding:0 8px}
+aside .brand-name{
+  font-weight:700;font-size:14.5px;
+  letter-spacing:-.005em;color:var(--text);
+  display:flex;align-items:center;gap:8px;
+}
+aside .brand-name::before{
+  content:"";width:8px;height:8px;border-radius:2px;
+  background:var(--accent);
+}
+aside .brand-sub{
+  font-size:11px;color:var(--text-3);
+  margin:4px 0 0 16px;
+}
+
+aside .nav-section{margin-bottom:18px}
+aside .nav-label{
+  font-size:10.5px;color:var(--text-3);
+  letter-spacing:.06em;
+  margin:0 0 4px 8px;
+  font-weight:600;text-transform:uppercase;
+}
+aside nav a{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 10px;
+  color:var(--text-2);
+  font-size:13px;line-height:1.4;
+  border-radius:var(--r);
+  margin:0;
+  transition:all .12s;
+}
+aside nav a:hover{
+  background:var(--surface-2);
+  color:var(--text);
+  text-decoration:none;
+}
+aside nav a.active{
+  background:var(--accent-bg);
+  color:var(--accent);
+  font-weight:600;
+}
+aside nav a .num{
+  font-family:"SF Mono",ui-monospace,Menlo,monospace;
+  font-size:10.5px;color:var(--text-4);
+  font-variant-numeric:tabular-nums;
+}
+aside nav a.active .num{color:var(--accent)}
+aside .footer-meta{
+  margin-top:24px;padding:10px 12px;
+  border:1px solid var(--border);border-radius:var(--r);
+  font-size:11px;color:var(--text-3);line-height:1.5;
+  background:var(--surface-2);
+}
+
+main{
+  padding:28px 36px 80px;
+  max-width:1340px;
+  width:100%;
+}
+
+section{
+  margin-bottom:48px;
+  scroll-margin-top:24px;
+}
+
+/* ============ Section Header ============ */
+.section-head{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  border-bottom:1px solid var(--border-strong);
+  padding-bottom:10px;margin-bottom:20px;
+}
+.section-head .left{display:flex;flex-direction:column;gap:2px}
+.section-head .chapter-no{
+  font-size:11px;color:var(--text-3);
+  font-family:"SF Mono",ui-monospace,Menlo,monospace;
+  letter-spacing:.06em;text-transform:uppercase;
+  font-weight:600;
+}
+.section-head h1.h-page{
+  font-size:24px;line-height:1.2;
+  margin:0;font-weight:700;letter-spacing:-.012em;color:var(--text);
+}
+.section-head .right{
+  font-size:12px;color:var(--text-3);
+  text-align:right;
+}
+
+/* legacy h1.h-page not in section-head */
+h1.h-page{
+  font-size:24px;line-height:1.2;
+  margin:0 0 12px;font-weight:700;letter-spacing:-.012em;color:var(--text);
+}
+.chapter-no{
+  font-size:11px;color:var(--text-3);
+  font-family:"SF Mono",ui-monospace,Menlo,monospace;
+  letter-spacing:.06em;text-transform:uppercase;
+  font-weight:600;margin-bottom:6px;display:block;
+}
+
+h2.h-sec{
+  font-size:16px;line-height:1.3;
+  margin:32px 0 14px;padding:0 0 8px;
+  border-bottom:1px solid var(--border);
+  font-weight:700;letter-spacing:-.005em;color:var(--text);
+}
+h2.h-sec::before{display:none}
+
+h3.h-sub{
+  font-size:14px;line-height:1.4;
+  margin:18px 0 8px;
+  font-weight:600;color:var(--text);
+}
+h4{
+  font-size:13px;line-height:1.4;
+  margin:14px 0 6px;font-weight:600;color:var(--text);
+}
+
+/* ============ Lede ============ */
+.lede{
+  font-size:14.5px;line-height:1.65;
+  color:var(--text-2);
+  margin:0 0 20px;
+  max-width:880px;
+}
+.lede strong{color:var(--text);font-weight:600}
+
+p{margin:0 0 .8em}
+ul,ol{padding-left:20px;margin:0 0 .8em}
+li{margin-bottom:4px}
+strong{color:var(--text);font-weight:600}
+
+blockquote{
+  margin:14px 0;
+  padding:10px 16px;
+  background:var(--accent-bg);
+  border-left:3px solid var(--accent);
+  font-size:13.5px;line-height:1.6;
+  color:var(--text);
+}
+blockquote strong{color:var(--accent)}
+
+code{
+  font-family:"SF Mono",ui-monospace,Menlo,monospace;
+  background:var(--surface-2);
+  padding:1px 5px;border-radius:3px;font-size:12.5px;
+  color:var(--accent);
+}
+
+.muted{color:var(--text-3)}
+.subtle{font-size:13px;color:var(--text-2);line-height:1.6}
+hr.soft{border:none;border-top:1px solid var(--border);margin:20px 0}
+hr.thin{border:none;border-top:1px solid var(--border);margin:24px auto;width:100%}
+
+/* ============ Topbar / Banner ============ */
+.topbar, .callout{
+  background:var(--accent-bg);
+  border:1px solid var(--accent-border);
+  border-left:3px solid var(--accent);
+  padding:12px 16px;
+  margin:0 0 20px;
+  font-size:13.5px;line-height:1.55;
+  color:var(--text);
+  border-radius:var(--r-sm);
+  display:flex;gap:12px;align-items:flex-start;
+}
+.topbar .icon{font-size:16px;color:var(--accent);flex-shrink:0;line-height:1.4}
+.topbar strong, .callout strong{color:var(--accent);font-weight:600}
+
+/* ============ KPI Row ============ */
+.kpi-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin:0 0 20px;
+}
+@media(max-width:1100px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:14px 16px;
+  position:relative;
+}
+.kpi .label{
+  font-size:11px;color:var(--text-3);
+  font-weight:600;letter-spacing:.04em;
+  margin-bottom:8px;text-transform:uppercase;
+}
+.kpi .value{
+  font-size:24px;font-weight:700;line-height:1.1;
+  letter-spacing:-.018em;color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+.kpi .value small{
+  font-size:13px;font-weight:500;color:var(--text-3);
+  margin-left:4px;letter-spacing:0;
+}
+.kpi .desc{font-size:12px;color:var(--text-2);margin-top:6px;line-height:1.5}
+.kpi.accent .value, .kpi.amber .value{color:var(--accent)}
+.kpi.green .value, .kpi.emerald .value{color:var(--green)}
+.kpi.red .value, .kpi.danger .value, .kpi.rose .value{color:var(--red)}
+.kpi.blue .value, .kpi.indigo .value, .kpi.info .value{color:var(--blue)}
+.kpi.purple .value, .kpi.violet .value{color:var(--purple)}
+
+/* legacy .card .num support → reuse .kpi style */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:16px 18px;
+  position:relative;
+  box-shadow:none;
+  transition:border-color .12s;
+}
+.card:hover{border-color:var(--border-strong)}
+.card.clickable{cursor:pointer}
+.card.clickable:hover{border-color:var(--accent-border)}
+.card .label{
+  font-size:11px;color:var(--text-3);
+  font-weight:600;letter-spacing:.04em;
+  margin-bottom:8px;text-transform:uppercase;
+}
+.card .num{
+  font-size:24px;font-weight:700;line-height:1.1;
+  letter-spacing:-.018em;color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+.card .num small{
+  font-size:13px;font-weight:500;color:var(--text-3);
+  margin-left:4px;letter-spacing:0;
+}
+.card .desc{color:var(--text-2);font-size:12.5px;margin-top:8px;line-height:1.55}
+.card.amber .num,  .card.accent .num {color:var(--accent)}
+.card.emerald .num, .card.good .num, .card.green .num   {color:var(--green)}
+.card.rose .num,   .card.danger .num, .card.red .num {color:var(--red)}
+.card.indigo .num, .card.blue .num, .card.info .num  {color:var(--blue)}
+.card.violet .num                      {color:var(--purple)}
+
+/* ============ Pills ============ */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:600;
+  padding:2px 7px;border-radius:3px;
+  border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);
+  white-space:nowrap;letter-spacing:.02em;
+}
+.pill.green,.pill.emerald  {border-color:var(--green-border);color:var(--green);background:var(--green-bg)}
+.pill.amber                {border-color:var(--accent-border);color:var(--accent);background:var(--accent-bg)}
+.pill.red,.pill.rose       {border-color:var(--red-border);color:var(--red);background:var(--red-bg)}
+.pill.blue,.pill.indigo    {border-color:var(--blue-border);color:var(--blue);background:var(--blue-bg)}
+.pill.violet               {color:var(--purple);background:var(--purple-bg)}
+.pill.dim                  {color:var(--text-4);border-color:var(--border)}
+
+/* ============ Grid ============ */
+.grid{display:grid;gap:14px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.grid-stat{grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 18px}
+@media(max-width:1100px){.grid-3,.grid-4,.grid-stat{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){
+  .app{grid-template-columns:1fr}
+  aside.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .grid-2,.grid-3,.grid-4,.grid-stat,.kpi-row{grid-template-columns:1fr}
+  main{padding:20px 16px}
+  h1.h-page{font-size:20px}
+}
+
+/* ============ Tables ============ */
+.table-wrap{
+  overflow-x:auto;
+  border-radius:var(--r);
+  border:1px solid var(--border);
+  background:var(--surface);
+  margin:14px 0;
+}
+table.t{
+  width:100%;border-collapse:collapse;font-size:13px;
+  background:var(--surface);min-width:680px;
+}
+table.t th,table.t td{
+  padding:10px 14px;text-align:left;
+  border-bottom:1px solid var(--border);vertical-align:top;
+  color:var(--text-2);
+}
+table.t thead th{
+  background:var(--surface-2);color:var(--text-3);
+  font-weight:600;font-size:11px;letter-spacing:.04em;
+  text-transform:uppercase;
+  position:sticky;top:0;
+}
+table.t tr:last-child td{border-bottom:none}
+table.t tr:hover td{background:var(--surface-2)}
+table.t strong{color:var(--text);font-weight:600}
+
+/* ============ Ladder ============ */
+.ladder{display:grid;gap:6px;margin:14px 0}
+.ladder .step{
+  display:grid;grid-template-columns:46px 1fr auto;gap:14px;
+  align-items:center;padding:12px 14px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  transition:border-color .12s;
+}
+.ladder .step:hover{border-color:var(--accent-border)}
+.ladder .step .lvl{
+  font-size:18px;font-weight:700;color:var(--text-3);
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+}
+.ladder .step .lvl small{
+  display:block;font-size:9px;font-weight:600;color:var(--text-4);
+  letter-spacing:.1em;margin-top:1px;
+}
+.ladder .step .ttl{font-weight:600;font-size:13.5px;color:var(--text)}
+.ladder .step .desc{font-size:12.5px;color:var(--text-2);margin-top:3px;line-height:1.55}
+.ladder .step.done{border-left:3px solid var(--green)}
+.ladder .step.done .lvl{color:var(--green)}
+.ladder .step.target{border-left:3px solid var(--accent);background:var(--accent-bg)}
+.ladder .step.target .lvl{color:var(--accent)}
+
+/* ============ Timeline · 紧凑两栏，年份inline ============ */
+.timeline{
+  position:relative;padding:0;margin:14px 0;
+  background:transparent;border:none;border-radius:0;
+}
+.timeline::before{display:none}
+.timeline .item{
+  display:block;
+  padding:10px 14px 10px 14px;
+  border-left:2px solid var(--border);
+  margin:0 0 0 4px;
+  position:relative;
+}
+.timeline .item:hover{border-left-color:var(--accent);background:var(--surface)}
+.timeline .item::before{display:none}
+.timeline .yr{
+  display:inline-block;
+  font-size:11px;color:var(--accent);letter-spacing:.04em;
+  font-weight:700;font-family:"SF Mono",ui-monospace,Menlo,monospace;
+  font-variant-numeric:tabular-nums;
+  background:var(--accent-bg);
+  padding:1px 7px;border-radius:3px;
+  margin-right:10px;
+  vertical-align:1px;
+}
+.timeline .ttl{
+  display:inline;
+  font-weight:600;font-size:13.5px;color:var(--text);
+  margin:0;line-height:1.5;
+}
+.timeline .desc{
+  display:block;
+  font-size:12.5px;color:var(--text-2);
+  margin-top:4px;line-height:1.65;
+}
+.timeline .item.warn{border-left-color:var(--red)}
+.timeline .item.warn .yr{color:var(--red);background:var(--red-bg)}
+.timeline .item.warn .ttl{color:var(--red)}
+.timeline > .item:first-child{padding-top:14px}
+
+/* ============ Map ============ */
+.map-wrap{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);padding:0;
+  position:relative;
+  margin:0 0 16px;
+  overflow:hidden;
+}
+.map-svg{width:100%;height:auto;display:block;background:#fafaf6}
+.china-map{font-family:-apple-system,"PingFang SC",sans-serif}
+.map-legend{
+  display:flex;gap:16px;flex-wrap:wrap;
+  padding:12px 18px;
+  font-size:11.5px;color:var(--text-2);
+  border-top:1px solid var(--border);
+  background:var(--surface-2);
+}
+.map-legend .item{display:flex;align-items:center;gap:6px}
+.map-legend .sw{display:inline-block;width:12px;height:12px;border-radius:2px;border:1px solid rgba(0,0,0,.06)}
+.prov-tip{
+  position:absolute;pointer-events:none;
+  background:var(--text);
+  border:none;
+  padding:9px 13px;border-radius:var(--r-sm);
+  font-size:12px;line-height:1.5;
+  color:#fff;
+  box-shadow:0 4px 16px rgba(0,0,0,.2);
+  min-width:200px;max-width:280px;
+  z-index:10;display:none;
+}
+.prov-tip strong{color:#f3c994;display:block;margin-bottom:4px;font-size:13px;font-weight:700}
+.province{transition:all .15s;cursor:pointer}
+.province:hover{filter:brightness(1.08) saturate(1.2)}
+
+/* ============ Network / Charts ============ */
+.net-wrap{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:14px;position:relative;overflow:hidden;
+  margin:14px 0;
+}
+.net-svg{width:100%;height:auto;display:block}
+.net-node{cursor:pointer;transition:all .15s}
+
+/* ============ Risk Matrix ============ */
+.risk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+@media(max-width:900px){.risk-grid{grid-template-columns:1fr}}
+.risk-cell{
+  padding:14px 16px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);
+  position:relative;overflow:hidden;
+}
+.risk-cell::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:3px;
+}
+.risk-cell.r1{border-color:var(--red-border);background:var(--red-bg)}
+.risk-cell.r1::before{background:var(--red)}
+.risk-cell.r2{border-color:var(--accent-border);background:var(--accent-bg)}
+.risk-cell.r2::before{background:var(--accent)}
+.risk-cell.r3{border-color:var(--blue-border);background:var(--blue-bg)}
+.risk-cell.r3::before{background:var(--blue)}
+.risk-cell .lv{
+  font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+  font-family:"SF Mono",ui-monospace,Menlo,monospace;
+}
+.risk-cell.r1 .lv{color:var(--red)}
+.risk-cell.r2 .lv{color:var(--accent)}
+.risk-cell.r3 .lv{color:var(--blue)}
+.risk-cell .ttl{font-weight:700;font-size:14.5px;margin:5px 0 8px;color:var(--text)}
+.risk-cell .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+
+/* ============ Details · 折叠 ============ */
+details{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);margin:6px 0;
+  transition:border-color .12s;
+}
+details:hover{border-color:var(--border-strong)}
+details[open]{border-color:var(--accent-border)}
+details summary{
+  cursor:pointer;padding:12px 16px;
+  font-weight:600;font-size:13.5px;
+  list-style:none;display:flex;justify-content:space-between;align-items:center;
+  user-select:none;color:var(--text);
+}
+details summary::-webkit-details-marker{display:none}
+details summary::after{
+  content:"+";color:var(--accent);font-size:16px;
+  font-weight:300;transition:transform .2s;
+}
+details[open] summary::after{transform:rotate(45deg)}
+details .body{
+  padding:0 16px 14px;color:var(--text-2);font-size:13px;line-height:1.65;
+  border-top:1px solid var(--border);padding-top:14px;
+}
+details .body dl.kv{
+  display:grid;grid-template-columns:120px 1fr;gap:8px 18px;
+  font-size:12.5px;align-items:start;margin:0 0 8px;
+}
+details .body dl.kv dt{color:var(--text-3);font-size:11.5px;padding-top:1px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+details .body dl.kv dd{margin:0;color:var(--text)}
+
+/* ============ Gap Table ============ */
+.gap-table{
+  display:grid;grid-template-columns:170px 1.6fr 1.4fr;gap:0;
+  border:1px solid var(--border);border-radius:var(--r);overflow:hidden;
+  background:var(--surface);margin:14px 0;
+}
+.gap-table > div{
+  padding:11px 14px;border-bottom:1px solid var(--border);
+  font-size:12.5px;line-height:1.55;color:var(--text-2);
+}
+.gap-table > div:nth-last-child(-n+3){border-bottom:none}
+.gap-table .head{
+  font-weight:700;font-size:11px;color:var(--text-3);
+  letter-spacing:.04em;text-transform:uppercase;
+  background:var(--surface-2);padding:10px 14px;
+}
+.gap-table .col-mid{border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.gap-table strong{color:var(--text);font-weight:600}
+.gap-table .who{color:var(--text-2);font-size:12px}
+@media(max-width:900px){
+  .gap-table{grid-template-columns:1fr}
+  .gap-table .col-mid{border:none}
+}
+
+/* ============ Action ============ */
+.action{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:12px 14px;
+  display:grid;grid-template-columns:30px 1fr auto;gap:12px;align-items:start;
+}
+.action .idx{
+  width:26px;height:26px;border-radius:4px;
+  background:var(--accent-bg);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13px;
+}
+.action .ttl{font-weight:600;font-size:13.5px;color:var(--text)}
+.action .desc{font-size:12.5px;color:var(--text-2);margin-top:2px;line-height:1.55}
+.action .when{font-size:11px;color:var(--text-3);text-align:right;white-space:nowrap;font-family:"SF Mono",ui-monospace,Menlo,monospace}
+
+/* ============ Mobile menu ============ */
+.menu-btn{
+  display:none;position:fixed;top:14px;right:14px;z-index:100;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:8px 12px;color:var(--text);font-size:13px;cursor:pointer;
+  box-shadow:var(--shadow);
+}
+@media(max-width:760px){.menu-btn{display:block}aside.sidebar.collapsed{display:none}}
+
+/* ============ Scrollbar ============ */
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-4)}
+::-webkit-scrollbar-track{background:transparent}
+
+/* legacy .eyebrow → 复用 chapter-no */
+.eyebrow{
+  font-size:11px;color:var(--text-3);
+  font-family:"SF Mono",ui-monospace,Menlo,monospace;
+  letter-spacing:.06em;text-transform:uppercase;
+  font-weight:600;display:inline-block;margin-bottom:6px;
+}
+.eyebrow::before{display:none}
+.fade-in{animation:none}
+
+/* ============ Org Chart · 利益相关方层级 ============ */
+.org-chart{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:24px;margin:14px 0;
+}
+.org-tier{
+  display:grid;
+  gap:12px;
+  margin-bottom:0;
+  position:relative;
+}
+.org-tier[data-tier]::before{
+  content:attr(data-tier);
+  position:absolute;
+  top:-9px;left:14px;
+  background:var(--surface);
+  padding:0 8px;
+  font-size:10.5px;color:var(--text-3);
+  font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  font-family:"SF Mono",ui-monospace,Menlo,monospace;
+  z-index:2;
+}
+.org-tier{
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:18px 16px 14px;
+}
+.org-tier:nth-child(1){grid-template-columns:repeat(3,1fr)}
+.org-tier:nth-child(3){grid-template-columns:repeat(2,1fr)}
+.org-tier:nth-child(5){grid-template-columns:1fr}
+.org-tier:nth-child(7){grid-template-columns:1fr}
+@media(max-width:760px){
+  .org-tier:nth-child(1),.org-tier:nth-child(3){grid-template-columns:1fr}
+}
+
+.org-box{
+  padding:12px 14px;
+  border-radius:var(--r-sm);
+  background:var(--surface-2);
+  border:1px solid var(--border);
+}
+.org-box.primary{background:#fef4e6;border-color:#f3d4a0}
+.org-box.accent{background:#f5efff;border-color:#d4c4f0}
+.org-box.external{background:#eff5ff;border-color:#bfd1f3}
+.org-box.neutral{background:var(--surface-2);text-align:center;padding:14px;font-weight:600;color:var(--text-2)}
+.org-name{font-weight:700;font-size:14px;color:var(--text);margin-bottom:2px}
+.org-role{font-size:12px;color:var(--text-2);margin-bottom:6px}
+.org-tag{font-size:11.5px;color:var(--text-3);line-height:1.5}
+.org-tag.flag-key{color:var(--accent);font-weight:600}
+
+.org-arrow{
+  text-align:center;
+  margin:8px 0;
+  position:relative;
+}
+.org-arrow::before{
+  content:"";
+  position:absolute;left:50%;top:0;bottom:0;
+  width:1px;background:var(--border-strong);
+  transform:translateX(-50%);
+}
+.org-arrow-label{
+  position:relative;
+  display:inline-block;
+  background:var(--surface);
+  padding:0 12px;
+  font-size:11.5px;color:var(--text-3);
+  font-weight:500;
+  font-family:-apple-system,sans-serif;
+}
+
+/* Org side grid · 监管推广方 */
+.org-side-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin:14px 0;
+}
+@media(max-width:1100px){.org-side-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.org-side-grid{grid-template-columns:1fr}}
+.org-side-box{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:12px 14px;
+}
+.org-side-label{
+  font-size:10.5px;color:var(--text-3);
+  font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  font-family:"SF Mono",ui-monospace,Menlo,monospace;
+  margin-bottom:5px;
+}
+.org-side-name{
+  font-weight:700;font-size:14px;color:var(--text);
+  margin-bottom:4px;
+}
+.org-side-meta{font-size:12px;color:var(--text-2);line-height:1.55}
+
+/* ============ Cartogram cell hover ============ */
+.china-map .province{cursor:pointer;transition:filter .12s}
+.china-map .province:hover{filter:brightness(1.06)}
+.china-map .province:hover rect{stroke:#1a1612;stroke-width:2.5}
+
+</style>
+</head>
+<body>
+
+<button class="menu-btn" onclick="document.querySelector('aside').classList.toggle('collapsed')">≡ 菜单</button>
+
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-name">ARC 项目生态</div>
+    <div class="brand-sub">一份内部研究 · 2026 春</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">序</div>
+    <nav>
+      <a href="#home" class="nav-item active">当前生态位<span class="num">00</span></a>
+    </nav>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">五条研究线</div>
+    <nav>
+      <a href="#policy"    class="nav-item">政策认领<span class="num">I</span></a>
+      <a href="#honors"    class="nav-item">荣誉地图<span class="num">II</span></a>
+      <a href="#people"    class="nav-item">关键人物<span class="num">III</span></a>
+      <a href="#interests" class="nav-item">利益链条<span class="num">IV</span></a>
+      <a href="#gap"       class="nav-item">三口缺口<span class="num">V</span></a>
+    </nav>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">机会分析 ★</div>
+    <nav>
+      <a href="#political" class="nav-item">政商结合 · 任务地图<span class="num">VI</span></a>
+      <a href="#niche"     class="nav-item">5 种历史先例<span class="num">VII</span></a>
+      <a href="#decision"  class="nav-item">三种结局推演<span class="num">VIII</span></a>
+    </nav>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">附录</div>
+    <nav>
+      <a href="#tech"    class="nav-item">ARC 技术速读</a>
+      <a href="#sources" class="nav-item">资料来源</a>
+    </nav>
+  </div>
+
+  <div class="footer-meta">
+    内部研究文件。所有"判断"开头的段落为推论，并非已确认事实。<br><br>
+    版本 5.0 · 2026.04.24
+  </div>
+</aside>
+
+<main>
+
+<!-- =============== HOME =============== -->
+<section id="home">
+  <div class="section-head">
+    <div class="left">
+      <div class="chapter-no">SEC 00 ／ OVERVIEW</div>
+      <h1 class="h-page">ARC 项目生态 · 工作台</h1>
+    </div>
+    <div class="right">
+      数据更新 2026.04.24<br>
+      <span class="muted">v6.0 · 内部使用</span>
+    </div>
+  </div>
+
+  <!-- 4 KPI · 信息密度高 -->
+  <div class="kpi-row">
+    <div class="kpi amber">
+      <div class="label">体制内位置</div>
+      <div class="value">第 4 阶<small>/6 阶</small></div>
+      <div class="desc">部级主推 + 重大引领性 + 中关村论坛 · 下一冲：丰收奖一等</div>
+    </div>
+    <div class="kpi green">
+      <div class="label">省级真推数</div>
+      <div class="value">5 省<small>+ 1 自治区</small></div>
+      <div class="desc">黑龙江 / 河南 / 山东 / 湖北 / 福建 / 内蒙古</div>
+    </div>
+    <div class="kpi purple">
+      <div class="label">商业化结构</div>
+      <div class="value">3 层</div>
+      <div class="desc">院士团队 → 阿可生物 + 王女士厂 → 新洋丰独家</div>
+    </div>
+    <div class="kpi red">
+      <div class="label">最大空缺</div>
+      <div class="value">商业化口</div>
+      <div class="desc">资本 · 国际化 · 衍生品 · 数据闭环</div>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <div class="icon">▸</div>
+    <div>
+      <strong>核心结论：</strong> ARC 已走完"科研立项 → 国家级背书 → 产业化首单"前三步。当前生态是<strong>院士团队 + 内部商业化平台 + 单一上市公司独家承接</strong>的三角结构。外部新进入者必须先看清三角的利益分配，找到团队真正缺、又没人补的那一口。
+    </div>
+  </div>
+
+  <h2 class="h-sec">三个核心判断</h2>
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="label">01 · 政策面</div>
+      <h3 class="h-sub">进了文件，没成品牌</h3>
+      <p class="subtle" style="margin:0">顶层设计齐全（部级主推 + 引领性 + 中关村），但多省份落地文件里 ARC 仍以"根瘤菌"通用名出现 — 同行可以共用补贴语境。<strong>下一步 12 个月最值钱：把"ARC"三个字钉进省级主推目录。</strong></p>
+    </div>
+    <div class="card">
+      <div class="label">02 · 内部结构</div>
+      <h3 class="h-sub">独家是对外的，内部已有多通道</h3>
+      <p class="subtle" style="margin:0">新洋丰是<u>复合肥独家</u>，但团队同时握有阿可生物 + 王女士菌剂厂作为生产端。<strong>菌种、衍生品、海外授权均不在独家范围内</strong> — 制度性空隙留给了新搅局者。</p>
+    </div>
+    <div class="card">
+      <div class="label">03 · 外部介入空间</div>
+      <h3 class="h-sub">最大空间在"商业化口"</h3>
+      <p class="subtle" style="margin:0">政策口团队不缺人帮，政绩口已有院士身份。<strong>真正缺：资本平台、国际化、衍生品类拓展、农户数据闭环</strong> — 这些目前要么没人做、要么没人能做。</p>
+    </div>
+  </div>
+
+  <h2 class="h-sec">ARC 关键时间线 (2015 → 2026)</h2>
+  <div class="card">
+    <div class="timeline">
+      <div class="item">
+        <div class="yr">2015</div>
+        <div class="ttl">李培武团队首获国家技术发明奖二等奖</div>
+        <div class="desc">《农产品黄曲霉毒素靶向抗体创制与高灵敏检测技术》——为后续 ARC 路径打下理论与人脉底子。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2019</div>
+        <div class="ttl">李培武当选中国工程院院士 (农业学部)</div>
+        <div class="desc">"院士"身份从此成为所有现场会、媒体报道、企业谈判的最大单一资产。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2023.07</div>
+        <div class="ttl">新洋丰与油料所签战略合作 · ARC 进入产业化通道</div>
+        <div class="desc">这一刻是 ARC 从"科研"变"商业"的拐点。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2023.09</div>
+        <div class="ttl">河南正阳/方城两次专家测产观摩会 · 花生增产 13-36%</div>
+        <div class="desc">中国农科院油料所 + 新洋丰联合主办；ARC 第一次在主产区接受公开验证。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2023</div>
+        <div class="ttl">入选全国农业主推技术 (农业农村部)</div>
+        <div class="desc">第一次拿到部级背书。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2023.10</div>
+        <div class="ttl">全国农技中心赴黑龙江爱辉区实打实收 (大豆)</div>
+        <div class="desc">大豆株高 +16.83%、单株荚数 +25.65%、粒数 +29.32%。这次验收是后续黑龙江补贴政策的事实基础。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2024</div>
+        <div class="ttl">入选 2024 十大国家农业重大引领性技术</div>
+        <div class="desc">全国仅 10 项。ARC 正式进入"国家战略性"语义。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2024.09</div>
+        <div class="ttl">河南兰考县考城镇万亩连片实收 327.25 公斤/亩，对照 +38.68%</div>
+        <div class="desc">目前 ARC 公开报道中最强的单一示范成果。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2025.03.31</div>
+        <div class="ttl">中关村论坛年会 · ARC 作为重大科技成果发布</div>
+        <div class="desc">李培武团队 + 新洋丰联合发布。论坛主调"原创性、引领性、国际性"。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2025</div>
+        <div class="ttl">黑龙江省发布 6 元/亩 ARC + 根瘤菌补贴 · 全国唯一</div>
+        <div class="desc">5 元菌剂购置 + 1 元接种服务费。仍标"暂定"，2026 年财政能否续作是关键观察点。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2025</div>
+        <div class="ttl">李培武入选全国先进工作者（中共中央国务院 2025.04.29 表彰）</div>
+        <div class="desc">个人轨道与"院士 (2019) → 五一劳动奖章 (2024)"形成 6 年连锁，是当前农业科技体制内顶级个人荣誉中的最高一档。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2025.03</div>
+        <div class="ttl">⚠ 油料所所长更迭：黄凤洪 → <strong>张扬勇</strong></div>
+        <div class="desc">2025.03.13 张扬勇（原蔬菜花卉所副所长，1977 年生）接任油料所所长。这是 ARC 项目的关键变量——新所长与李培武团队的磨合与协调态度待观察。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2025.05</div>
+        <div class="ttl">兰考考城镇 ARC 菌剂示范项目正式启动 · 万亩菌剂捐赠</div>
+        <div class="desc">胡姬花研究院捐赠万亩菌剂，标志着 ARC 在河南从"试验"进入"规模化商业落地"。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2025 秋</div>
+        <div class="ttl">河南正阳清源乐堂村测产 · 486.75 kg/亩 +32.09%</div>
+        <div class="desc">豫花 37 号（鲜果折干），20 亩示范，对照 368.51 kg/亩。这是 2025 年 ARC 在河南的<strong>最强单一示范数据</strong>，超过 2024 兰考的 327.25 kg/亩。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2025 全年</div>
+        <div class="ttl">ARC 正式纳入河南 / 山东省级花生主推技术（"3-4 公斤/亩"明确进入文件）</div>
+        <div class="desc">河南 + 山东 2025 年度《花生大面积单产提升技术意见》均明确写入"ARC 微生物菌剂 3-4 公斤/亩"。这是 ARC <strong>从"项目示范"升级为"省级主推"的关键节点</strong>——之前只有黑龙江 6 元/亩补贴一条线，现在主推清单也撑起来了。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2026.02</div>
+        <div class="ttl">2026 中央一号文件 · "粮油作物大面积单产提升行动"</div>
+        <div class="desc">首次升级"粮油作物"叙事 + 新增"品质提升"要求，但<strong>未指名 ARC</strong>。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2026.03</div>
+        <div class="ttl">李培武团队在 Nature Communications 发表黄曲霉论文</div>
+        <div class="desc">2026.03.18 发表黄曲霉种群产毒素系统地理特征研究——是冲国家科技进步奖一等的重要学术资本。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2026</div>
+        <div class="ttl">黑龙江 6 元/亩补贴续作 · 覆盖 75 个县</div>
+        <div class="desc">省厅发文确认续作。重点示范县：宾县、梅里斯区、抚远、望奎、南岔、嘉荫、铁力、塔河、漠河等。</div>
+      </div>
+      <div class="item warn">
+        <div class="yr">2026 H1+ 观察点</div>
+        <div class="ttl" style="color:var(--red)">⚠ 内部商业化结构"分蛋糕"窗口</div>
+        <div class="desc">阿可生物（团队系）与新洋丰（外部独家）之间需要划清"菌种—制剂—复合肥"的三段权利边界；外部生产合作（王女士等）的位置也将被重新谈判。这一阶段是新搅局者介入的最佳时间窗。</div>
+      </div>
+      <div class="item">
+        <div class="yr">2026-2027</div>
+        <div class="ttl">冲刺：全国农牧渔业丰收奖 · 成果奖一等</div>
+        <div class="desc">用兰考 / 兴安盟 / 爱辉这几个示范的产销数据当主材料。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============== POLICY =============== -->
+<section id="policy">
+  <div class="chapter-no">I ／ 政策认领</div>
+  <h1 class="h-page">谁真的在推、谁只是表态</h1>
+  <p class="lede">
+    在中国农业里，技术没有被认领就只是成果。一旦被认领，它才开始变成项目、预算、示范、新闻。这条线判断的不是文件写没写"支持"，而是<strong>有没有面积任务、财政资金、责任单位、领导亲自露面</strong>。
+  </p>
+
+  <div class="grid grid-stat">
+    <div class="card green">
+      <div class="label">中央层认领</div>
+      <div class="num">9<small>/10</small></div>
+      <div class="desc">2024 十大引领性技术 + 2023 主推技术 + 2025 中央一号文件覆盖微生物菌剂。无需再争。</div>
+    </div>
+    <div class="card amber">
+      <div class="label">省级真推数</div>
+      <div class="num">5 省<small>+ 1 自治区</small></div>
+      <div class="desc">黑龙江★★★★★ · 河南★★★★★ · 山东★★★★ · 湖北★★★★ · 内蒙古★★★★ · 福建★★★ · 辽宁★★★（高补贴但无 ARC）</div>
+    </div>
+    <div class="card red">
+      <div class="label">补贴政策完整性</div>
+      <div class="num">2<small>/10</small></div>
+      <div class="desc">仅黑龙江 6 元/亩。其他省全是"技术指导"，不是"现金补贴"。</div>
+    </div>
+    <div class="card blue">
+      <div class="label">品牌唯一化程度</div>
+      <div class="num">4<small>/10</small></div>
+      <div class="desc">山东、河北、安徽、辽宁的文件里只有"根瘤菌"，竞品可以打着同样旗号搞推广。</div>
+    </div>
+  </div>
+
+  <h2 class="h-sec">省级认领强度地图</h2>
+  <p class="subtle muted">鼠标悬停查看各省状态。颜色越深 = 政策认领力度越强 (综合：是否有专属文件、是否有补贴、是否点名 ARC 品牌、示范规模、领导出场)。</p>
+
+  <div class="map-wrap">
+    <svg viewBox="0 0 920 720" id="chinaMap" class="map-svg china-map" xmlns="http://www.w3.org/2000/svg">
+      <rect width="920" height="720" fill="#fafaf6"/>
+      <text x="16" y="22" fill="#1a1612" font-size="13" font-weight="700">省级 ARC 政策认领热度（真实地理位置 + 面积比例）</text>
+      <text x="16" y="38" fill="#77756e" font-size="11">每格大小近似真实省份面积 · 颜色越深认领力度越强 · 2024-2026 数据</text>
+      <g id="provinces" font-family="-apple-system,PingFang SC,sans-serif">
+      <g class="province" data-tip="<strong>黑龙江 ★★★★★</strong>2026 续作 6 元/亩补贴 · 覆盖 75 县<br>许勤书记 + 胡玉亭省长<br>核心考核：粮食 + 黑土 + 大豆三重叠加" data-name="黑龙江">
+        <rect x="740" y="28" width="150" height="140" rx="4" fill="#7a3a0c" stroke="#fff" stroke-width="1.5"/>
+        <text x="815.0" y="88.0" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">黑龙江</text>
+        <text x="815.0" y="123.0" text-anchor="middle" fill="#fef4e6" font-size="10" font-weight="500">6元/亩 · 75县</text>
+        <circle cx="803.0" cy="160" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="809.0" cy="160" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="815.0" cy="160" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="821.0" cy="160" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="827.0" cy="160" r="2" fill="#fff" opacity="0.9"/>
+      </g>
+      <g class="province" data-tip="<strong>吉林 ★★★</strong>大豆主产第二省 · 540 元/亩补贴<br>黄强书记（浙江背景，对新质生产力敏感）" data-name="吉林">
+        <rect x="760" y="170" width="140" height="80" rx="4" fill="#e8a45a" stroke="#fff" stroke-width="1.5"/>
+        <text x="830.0" y="206.0" text-anchor="middle" fill="#3d2606" font-size="13" font-weight="700">吉林</text>
+        <text x="830.0" y="226.0" text-anchor="middle" fill="#3d2606" font-size="10" font-weight="500">540元/亩</text>
+        <circle cx="818.0" cy="242" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="824.0" cy="242" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="830.0" cy="242" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>辽宁 ★★★</strong>大豆补贴 410-460 元/亩<br>新品种辽豆 70 国审" data-name="辽宁">
+        <rect x="745" y="254" width="140" height="72" rx="4" fill="#e8a45a" stroke="#fff" stroke-width="1.5"/>
+        <text x="815.0" y="286.8" text-anchor="middle" fill="#3d2606" font-size="13" font-weight="700">辽宁</text>
+        <text x="815.0" y="304.8" text-anchor="middle" fill="#3d2606" font-size="10" font-weight="500">410元/亩</text>
+        <circle cx="803.0" cy="318" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="809.0" cy="318" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="815.0" cy="318" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>内蒙古 ★★★★</strong>扎赉特旗音德尔镇 ARC 项目 · 321.7 kg/亩纪录<br>王伟中书记（深圳背景，重视创新）" data-name="内蒙古">
+        <rect x="230" y="72" width="500" height="90" rx="4" fill="#c46518" stroke="#fff" stroke-width="1.5"/>
+        <text x="480.0" y="112.0" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">内蒙古</text>
+        <text x="480.0" y="134.5" text-anchor="middle" fill="#fef4e6" font-size="10" font-weight="500">扎赉特旗</text>
+        <circle cx="468.0" cy="154" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="474.0" cy="154" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="480.0" cy="154" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="486.0" cy="154" r="2" fill="#fff" opacity="0.9"/>
+      </g>
+      <g class="province" data-tip="<strong>北京 ★★★</strong>中关村论坛主场 · ARC 2025.03.31 发布" data-name="北京">
+        <rect x="650" y="210" width="40" height="30" rx="4" fill="#e8a45a" stroke="#fff" stroke-width="1.5"/>
+        <text x="670.0" y="229.0" text-anchor="middle" fill="#3d2606" font-size="9" font-weight="700">北京</text>
+      </g>
+      <g class="province" data-tip="<strong>天津 ★</strong>" data-name="天津">
+        <rect x="693" y="225" width="32" height="28" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="709.0" y="243.0" text-anchor="middle" fill="#77756e" font-size="9" font-weight="700">天津</text>
+      </g>
+      <g class="province" data-tip="<strong>河北 ★★</strong>根瘤菌主推 8 年 · 无 ARC 字样<br>品牌化最大缺口省" data-name="河北">
+        <rect x="640" y="243" width="100" height="90" rx="4" fill="#f3d59c" stroke="#fff" stroke-width="1.5"/>
+        <text x="690.0" y="292.0" text-anchor="middle" fill="#5a3d12" font-size="13" font-weight="700">河北</text>
+        <circle cx="678.0" cy="325" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="684.0" cy="325" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>山西 ★</strong>非主产" data-name="山西">
+        <rect x="580" y="243" width="55" height="110" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="607.5" y="302.0" text-anchor="middle" fill="#77756e" font-size="11" font-weight="700">山西</text>
+        <circle cx="595.5" cy="345" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>山东 ★★★★</strong>2025 文件明确「ARC 3-4 kg/亩」<br>乳山花生 791 kg/亩（机械精播+ARC+水肥）<br>林武书记 · 周乃翔省长（杭州背景，看重数字农业）" data-name="山东">
+        <rect x="640" y="335" width="130" height="72" rx="4" fill="#c46518" stroke="#fff" stroke-width="1.5"/>
+        <text x="705.0" y="367.8" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">山东</text>
+        <text x="705.0" y="385.8" text-anchor="middle" fill="#fef4e6" font-size="10" font-weight="500">乳山791</text>
+        <circle cx="693.0" cy="399" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="699.0" cy="399" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="705.0" cy="399" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="711.0" cy="399" r="2" fill="#fff" opacity="0.9"/>
+      </g>
+      <g class="province" data-tip="<strong>新疆 ★</strong>陈小江书记（乡村振兴局背景）<br>盐碱地改良是习近平关注重点 · ARC 现配方需开发耐盐版" data-name="新疆">
+        <rect x="20" y="165" width="260" height="180" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="150.0" y="259.0" text-anchor="middle" fill="#77756e" font-size="13" font-weight="700">新疆</text>
+        <circle cx="138.0" cy="337" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>甘肃 ★</strong>非主产 · 但是闽宁帮扶宁夏的西邻" data-name="甘肃">
+        <rect x="220" y="205" width="170" height="72" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="305.0" y="245.0" text-anchor="middle" fill="#77756e" font-size="13" font-weight="700">甘肃</text>
+        <circle cx="293.0" cy="269" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>青海 ★</strong>非主产" data-name="青海">
+        <rect x="130" y="310" width="170" height="120" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="215.0" y="374.0" text-anchor="middle" fill="#77756e" font-size="13" font-weight="700">青海</text>
+        <circle cx="203.0" cy="422" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>西藏 ★</strong>非主产" data-name="西藏">
+        <rect x="20" y="432" width="290" height="150" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="165.0" y="511.0" text-anchor="middle" fill="#77756e" font-size="13" font-weight="700">西藏</text>
+        <circle cx="153.0" cy="574" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>宁夏 ★ 闽宁帮扶承接方</strong>李邑飞书记（新疆+扶贫背景）<br>菌草已是宁夏招牌 · ARC 可做第二个菌草" data-name="宁夏">
+        <rect x="395" y="260" width="42" height="55" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="416.0" y="291.5" text-anchor="middle" fill="#77756e" font-size="11" font-weight="700">宁夏</text>
+        <circle cx="404.0" cy="307" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>陕西 ★</strong>有「复合微生物菌剂」研发立项" data-name="陕西">
+        <rect x="442" y="260" width="75" height="140" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="479.5" y="334.0" text-anchor="middle" fill="#77756e" font-size="13" font-weight="700">陕西</text>
+        <circle cx="467.5" cy="392" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>河南 ★★★★★</strong>2025 文件明确「ARC 3-4 kg/亩」<br>正阳 486.75 kg/亩 +32.09%（2025）<br>兰考 327.25 kg/亩 +38.68%（2024）<br>刘宁书记（扶贫背景） · 焦裕禄精神发源地" data-name="河南">
+        <rect x="525" y="335" width="108" height="72" rx="4" fill="#7a3a0c" stroke="#fff" stroke-width="1.5"/>
+        <text x="579.0" y="367.8" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">河南</text>
+        <text x="579.0" y="385.8" text-anchor="middle" fill="#fef4e6" font-size="10" font-weight="500">兰考+正阳</text>
+        <circle cx="567.0" cy="399" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="573.0" cy="399" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="579.0" cy="399" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="585.0" cy="399" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="591.0" cy="399" r="2" fill="#fff" opacity="0.9"/>
+      </g>
+      <g class="province" data-tip="<strong>湖北 ★★★★</strong>新洋丰总部 + 油料所所在地<br>湖北省重大科技项目<br>203 块试验田<br>花生 +17.3-24%、大豆 +18.4-19.6%" data-name="湖北">
+        <rect x="520" y="408" width="108" height="72" rx="4" fill="#c46518" stroke="#fff" stroke-width="1.5"/>
+        <text x="574.0" y="440.8" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">湖北</text>
+        <text x="574.0" y="458.8" text-anchor="middle" fill="#fef4e6" font-size="10" font-weight="500">203试验田</text>
+        <circle cx="562.0" cy="472" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="568.0" cy="472" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="574.0" cy="472" r="2" fill="#fff" opacity="0.9"/>
+        <circle cx="580.0" cy="472" r="2" fill="#fff" opacity="0.9"/>
+      </g>
+      <g class="province" data-tip="<strong>安徽 ★★</strong>对接国家工程，无 ARC 文件" data-name="安徽">
+        <rect x="632" y="408" width="80" height="90" rx="4" fill="#f3d59c" stroke="#fff" stroke-width="1.5"/>
+        <text x="672.0" y="457.0" text-anchor="middle" fill="#5a3d12" font-size="13" font-weight="700">安徽</text>
+        <circle cx="660.0" cy="490" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="666.0" cy="490" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>江苏 ★★</strong>" data-name="江苏">
+        <rect x="716" y="408" width="108" height="75" rx="4" fill="#f3d59c" stroke="#fff" stroke-width="1.5"/>
+        <text x="770.0" y="449.5" text-anchor="middle" fill="#5a3d12" font-size="13" font-weight="700">江苏</text>
+        <circle cx="758.0" cy="475" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="764.0" cy="475" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>上海 ★</strong>" data-name="上海">
+        <rect x="828" y="408" width="32" height="28" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="844.0" y="426.0" text-anchor="middle" fill="#77756e" font-size="9" font-weight="700">上海</text>
+      </g>
+      <g class="province" data-tip="<strong>重庆 ★</strong>" data-name="重庆">
+        <rect x="445" y="402" width="72" height="52" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="481.0" y="432.0" text-anchor="middle" fill="#77756e" font-size="11" font-weight="700">重庆</text>
+        <circle cx="469.0" cy="446" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>四川 ★★</strong>全国油菜第一大省<br>川农大根瘤菌 V14-2，未与 ARC 对接" data-name="四川">
+        <rect x="315" y="402" width="128" height="128" rx="4" fill="#f3d59c" stroke="#fff" stroke-width="1.5"/>
+        <text x="379.0" y="470.0" text-anchor="middle" fill="#5a3d12" font-size="13" font-weight="700">四川</text>
+        <circle cx="367.0" cy="522" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="373.0" cy="522" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>浙江 ★</strong>" data-name="浙江">
+        <rect x="716" y="488" width="108" height="75" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="770.0" y="529.5" text-anchor="middle" fill="#77756e" font-size="13" font-weight="700">浙江</text>
+        <circle cx="758.0" cy="555" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>福建 ★★★ 闽宁通道起点</strong>泉州市农科所 2022 起 ARC 示范<br>惠安 +14.29%、平潭春 +13.7%、平潭秋 +17%<br>周祖翼书记（与林占熺历史渊源）" data-name="福建">
+        <rect x="716" y="567" width="90" height="108" rx="4" fill="#e8a45a" stroke="#fff" stroke-width="1.5"/>
+        <text x="761.0" y="614.2" text-anchor="middle" fill="#3d2606" font-size="13" font-weight="700">福建</text>
+        <text x="761.0" y="641.2" text-anchor="middle" fill="#3d2606" font-size="10" font-weight="500">2022起</text>
+        <circle cx="749.0" cy="667" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="755.0" cy="667" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="761.0" cy="667" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>台湾</strong>" data-name="台湾">
+        <rect x="830" y="540" width="38" height="108" rx="4" fill="#e8e6dc" stroke="#fff" stroke-width="1.5"/>
+        <text x="849.0" y="598.0" text-anchor="middle" fill="#a8a59c" font-size="11" font-weight="700">台湾</text>
+      </g>
+      <g class="province" data-tip="<strong>湖南 ★</strong>油菜+花生复合区" data-name="湖南">
+        <rect x="578" y="485" width="86" height="95" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="621.0" y="536.5" text-anchor="middle" fill="#77756e" font-size="13" font-weight="700">湖南</text>
+        <circle cx="609.0" cy="572" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>江西 ★</strong>" data-name="江西">
+        <rect x="667" y="485" width="90" height="95" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="712.0" y="536.5" text-anchor="middle" fill="#77756e" font-size="13" font-weight="700">江西</text>
+        <circle cx="700.0" cy="572" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>贵州 ★</strong>" data-name="贵州">
+        <rect x="490" y="490" width="86" height="80" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="533.0" y="534.0" text-anchor="middle" fill="#77756e" font-size="13" font-weight="700">贵州</text>
+        <circle cx="521.0" cy="562" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>云南 ★</strong>" data-name="云南">
+        <rect x="315" y="535" width="170" height="140" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="400.0" y="609.0" text-anchor="middle" fill="#77756e" font-size="13" font-weight="700">云南</text>
+        <circle cx="388.0" cy="667" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>广西 ★★</strong>花生主产区 · 无 ARC 痕迹" data-name="广西">
+        <rect x="490" y="575" width="140" height="90" rx="4" fill="#f3d59c" stroke="#fff" stroke-width="1.5"/>
+        <text x="560.0" y="624.0" text-anchor="middle" fill="#5a3d12" font-size="13" font-weight="700">广西</text>
+        <circle cx="548.0" cy="657" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="554.0" cy="657" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>广东 ★★</strong>2025 绿色种养循环试点" data-name="广东">
+        <rect x="635" y="580" width="140" height="80" rx="4" fill="#f3d59c" stroke="#fff" stroke-width="1.5"/>
+        <text x="705.0" y="624.0" text-anchor="middle" fill="#5a3d12" font-size="13" font-weight="700">广东</text>
+        <circle cx="693.0" cy="652" r="2" fill="#1a1612" opacity="0.45"/>
+        <circle cx="699.0" cy="652" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      <g class="province" data-tip="<strong>海南 ★</strong>南繁基地" data-name="海南">
+        <rect x="640" y="665" width="72" height="42" rx="4" fill="#dcd6c4" stroke="#fff" stroke-width="1.5"/>
+        <text x="676.0" y="690.0" text-anchor="middle" fill="#77756e" font-size="11" font-weight="700">海南</text>
+        <circle cx="664.0" cy="699" r="2" fill="#1a1612" opacity="0.45"/>
+      </g>
+      </g>
+    </svg>
+
+    <div class="prov-tip" id="provTip"></div>
+
+    <div class="map-legend">
+      <div class="item"><span class="sw" style="background:#f59e0b"></span>★★★★★ 真推 + 补贴</div>
+      <div class="item"><span class="sw" style="background:#d97706"></span>★★★★ 真推 + 现场会</div>
+      <div class="item"><span class="sw" style="background:#92400e"></span>★★★ 一般推广</div>
+      <div class="item"><span class="sw" style="background:#3a4256"></span>★★ 弱</div>
+      <div class="item"><span class="sw" style="background:#1a2030"></span>★ 暂未涉及</div>
+    </div>
+  </div>
+
+  <h2 class="h-sec">中央 → 部委 → 省级 三级认领阶梯</h2>
+  <div class="grid grid-3">
+    <div class="card green">
+      <div class="label">中央层 · 顶层定调</div>
+      <h3 class="h-sub">★★★★★</h3>
+      <ul style="font-size:13px;color:var(--txt-2);margin:0">
+        <li><strong>2026 中央一号文件</strong>（2026.02.03 发布）：首次将"粮食单产提升工程"升级为"<u>粮油作物大面积单产提升行动</u>"，新增"品质提升"要求；明确提及大豆/油菜/花生/油茶——但<strong>未直接指名 ARC 或微生物菌剂</strong>（隐性政策契合）</li>
+        <li><strong>2025 中央一号文件</strong>："开发微生物菌剂和酶制剂等新型原料"明确入文</li>
+        <li><strong>大豆油料产能提升工程</strong>：根瘤菌列为关键技术，4000+ 万亩</li>
+        <li><strong>大豆完全成本保险</strong>：2026 全国全覆盖 (70-80% 保费补贴)</li>
+      </ul>
+    </div>
+    <div class="card amber">
+      <div class="label">部委层 · 推广推手</div>
+      <h3 class="h-sub">★★★★★</h3>
+      <ul style="font-size:13px;color:var(--txt-2);margin:0">
+        <li><strong>农业农村部</strong>：2024 十大引领性技术 + 2023 主推技术</li>
+        <li><strong>全国农技中心</strong>：3 次实打实收 (黑龙江 / 河南 ×2 / 湖北)</li>
+        <li><strong>《全国大豆油料提产能农技行动专刊》</strong>2024 第10期、2025 第3期均入文</li>
+        <li><strong>22 省</strong>开展百亩-万亩-10万亩多级示范</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="label">省级 · 真正落地</div>
+      <h3 class="h-sub">★★★ 分化严重</h3>
+      <ul style="font-size:13px;color:var(--txt-2);margin:0">
+        <li><strong>黑龙江</strong>：唯一有补贴的省，6 元/亩</li>
+        <li><strong>河南</strong>：兰考万亩示范 + 三次现场会，无补贴</li>
+        <li><strong>内蒙古</strong>：兴安盟项目明确提"ARC + 根瘤菌配施"，无省级文件</li>
+        <li><strong>山东 / 河北</strong>：8 年根瘤菌主推，但未指名 ARC</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 class="h-sec">15 省真实认领状况（2024-2026 最新）</h2>
+  <p class="subtle muted">本表覆盖全国主要大豆/花生/油料省份。<strong>新洋丰 + 油料所共布设 70 个全国示范点</strong>从南到北全覆盖，但完整名单未公开。</p>
+  <div class="table-wrap">
+  <table class="t">
+    <thead>
+      <tr><th style="width:90px">省份</th><th>政策文件</th><th>补贴</th><th>ARC 品牌点名</th><th>示范规模 / 关键指标 / 厅长</th><th>评分</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>黑龙江</strong></td>
+        <td>《2026 / 2025 黑龙江省大豆根瘤菌菌剂接种技术示范推广项目实施方案》<span class="pill green" style="margin-left:4px">2026 续作</span></td>
+        <td><span class="pill green">6 元/亩</span></td>
+        <td>未点名 ARC，但实施方案对应油料所体系；与新洋丰联合示范</td>
+        <td><strong>覆盖 75 个县</strong>（重点 10 县：宾县、梅里斯区、抚远、望奎、南岔、嘉荫、铁力、塔河、漠河等）；爱辉区大豆 +34.7%、蛋白质 +3%；新洋丰大豆试验亩均 +12%</td>
+        <td><span style="color:var(--amber)">★★★★★</span></td>
+      </tr>
+      <tr>
+        <td><strong>河南</strong></td>
+        <td>《2025 全省花生大面积单产提升技术意见》<span class="pill green" style="margin-left:4px">明确 ARC</span>；2025 省委一号文件 150 万亩花生示范区</td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill green">✓ 明确</span>「ARC 微生物菌剂 3-4 公斤/亩」纳入主推</td>
+        <td>
+          ▸ 兰考考城镇万亩 327.25 kg/亩 +38.68%（2024 秋收）<br>
+          ▸ <strong>正阳清源乐堂村 486.75 kg/亩 +32.09%</strong>（2025 秋收，豫花37号鲜果折干）<br>
+          ▸ 南阳正阳黄磊家庭农场 2800 亩连片 +17%、毒素 -80%（2023）<br>
+          ▸ 2025.05 胡姬花研究院启动兰考升级项目，捐赠万亩菌剂<br>
+          ▸ 厅长：<strong>孙巍峰</strong>
+        </td>
+        <td><span style="color:var(--amber)">★★★★★</span></td>
+      </tr>
+      <tr>
+        <td><strong>山东</strong></td>
+        <td>《2025 全省花生大面积单产提升技术意见》<span class="pill green" style="margin-left:4px">明确 ARC</span></td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill green">✓ 明确</span>「ARC 微生物菌剂 3-4 公斤/亩」纳入花生主推</td>
+        <td>
+          ▸ <strong>乳山花生基地 791 公斤/亩</strong>（机械精播+ARC+水肥一体化，全国领先）<br>
+          ▸ 新洋丰山东花生试验：根瘤数 +40%、果实病斑 -70%、毒素 -80%<br>
+          ▸ 减氮 40% + 根瘤菌拌种最高 5216 kg/公顷<br>
+          ▸ 厅长：<strong>张红旗</strong>（兼省乡村振兴局局长）
+        </td>
+        <td><span style="color:var(--amber)">★★★★☆</span></td>
+      </tr>
+      <tr>
+        <td><strong>湖北</strong></td>
+        <td>《2025-2026 农业主导品种》；ARC 列为<strong>湖北省重大科技项目</strong></td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill green">✓ 项目级</span>；新洋丰高富专 ARC 复合肥已上市</td>
+        <td>
+          ▸ 新洋丰 + 油料所 <strong>布设 203 块试验田</strong>（湖北为大本营）<br>
+          ▸ 花生增产 17.3-24.0%（平均 +41 kg/亩）<br>
+          ▸ 大豆增产 18.4-19.6%（平均 +28 kg/亩）<br>
+          ▸ 黄曲霉产毒菌丰度降 67-69%<br>
+          ▸ 湖北省粮油作物种子产业技术创新联合体（湖北省种子集团牵头 + 华中农大 + 武大 + 油料所）
+        </td>
+        <td><span style="color:var(--amber)">★★★★☆</span></td>
+      </tr>
+      <tr>
+        <td><strong>内蒙古</strong></td>
+        <td>《2025 内蒙古大豆种子包衣项目实施方案》；扎赉特旗 2025 单产提升项目<span class="pill green" style="margin-left:4px">明确 ARC</span></td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill green">✓ 明确</span>「提质固氮 ARC 耦合绿色增产技术」列入项目</td>
+        <td>
+          ▸ <strong>扎赉特旗音德尔镇东方红村</strong>大豆 321.7 kg/亩（2024 创内蒙古纪录）<br>
+          ▸ 大豆单产提升示范区 174.3 万亩（558 个百亩田 + 237 个千亩方 + 7 个万亩片）<br>
+          ▸ 2025 生物育种大豆 65 万亩+；制种 5 万亩+
+        </td>
+        <td><span style="color:var(--amber)">★★★★☆</span></td>
+      </tr>
+      <tr>
+        <td><strong>福建 ★ 新增</strong></td>
+        <td>泉州市农科所主导（国家花生产业技术体系福建省综合试验站）</td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill green">✓ 项目级</span>2022 起引进 ARC</td>
+        <td>
+          ▸ 惠安春季 661.37 kg/亩 <strong>+14.29%</strong><br>
+          ▸ 平潭春季 630.70 kg/亩 <strong>+13.70%</strong><br>
+          ▸ 平潭秋季百亩 768.2 kg/亩 <strong>+17.0%</strong>
+        </td>
+        <td><span style="color:var(--amber)">★★★☆☆</span></td>
+      </tr>
+      <tr>
+        <td><strong>辽宁</strong></td>
+        <td>辽农农【2025】132 号《支持高油高蛋白优质大豆生产政策》（厅 + 财政厅）</td>
+        <td><span class="pill amber">410-460 元/亩</span><br><small>大豆补贴高于玉米</small></td>
+        <td><span class="pill red">无</span> 仅根瘤菌</td>
+        <td>
+          ▸ 新品种：辽豆 70（128 天高油春大豆 221 kg/亩）、辽鲜豆 25 国审<br>
+          ▸ 大连百亩-千亩-万亩示范片<br>
+          ▸ 沈阳铁西区微生物菌剂示范 +12.8%
+        </td>
+        <td>★★★☆☆</td>
+      </tr>
+      <tr>
+        <td><strong>河北</strong></td>
+        <td>根瘤菌接种连续 8 年主推技术；2025 强农惠农政策</td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill red">无</span></td>
+        <td>多地示范，无集中数据公开；<strong>是 ARC 品牌化最大缺口省</strong></td>
+        <td>★★☆☆☆</td>
+      </tr>
+      <tr>
+        <td><strong>吉林 ★ 新增</strong></td>
+        <td>2025 强农惠农政策；优质大豆品种 147 万亩</td>
+        <td><span class="pill amber">540 元/亩</span><br><small>东部地区</small></td>
+        <td><span class="pill red">无</span></td>
+        <td>
+          ▸ 大豆主产第二省，补贴强但<strong>无 ARC 痕迹</strong><br>
+          ▸ 与吉大植科 / 丽豪生物有联合培养博士迹象<br>
+          ▸ 是新洋丰 70 个示范点未公开但应有覆盖的关键省
+        </td>
+        <td>★★☆☆☆</td>
+      </tr>
+      <tr>
+        <td><strong>安徽</strong></td>
+        <td>《乡村产业发展规划 2021-2025》；对接国家大豆油料工程</td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill red">无</span></td>
+        <td>油菜大省（与川/鄂/湘并列）；安庆/马鞍山/芜湖/合肥油菜高产示范区；缺 ARC 进入</td>
+        <td>★★☆☆☆</td>
+      </tr>
+      <tr>
+        <td><strong>四川 ★ 新增</strong></td>
+        <td>全国油菜第一大省；川农大研发根瘤菌 V14-2</td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill red">无</span></td>
+        <td>有自主根瘤菌研究，但未与 ARC 体系合作；油菜场景值得拓展</td>
+        <td>★★☆☆☆</td>
+      </tr>
+      <tr>
+        <td><strong>广东 ★ 新增</strong></td>
+        <td>2025 绿色种养循环农业试点（花生为重点）；商品有机肥购置补贴</td>
+        <td><span class="pill amber">有机肥补贴</span></td>
+        <td><span class="pill red">无</span></td>
+        <td>花生消费 + 生产大省；新洋丰应有示范点但未公开</td>
+        <td>★★☆☆☆</td>
+      </tr>
+      <tr>
+        <td><strong>广西 ★ 新增</strong></td>
+        <td>—</td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill red">无</span></td>
+        <td>花生主产区，无 ARC 痕迹</td>
+        <td>★★☆☆☆</td>
+      </tr>
+      <tr>
+        <td><strong>湖南 ★ 新增</strong></td>
+        <td>油菜大面积单产提升技术指南</td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill red">无</span></td>
+        <td>油菜 + 花生复合区；推广潜力大但信息空白</td>
+        <td>★★☆☆☆</td>
+      </tr>
+      <tr>
+        <td><strong>陕西 ★ 新增</strong></td>
+        <td>2026 度陕西省重点科技攻关项目（含"复合微生物菌剂"研发）</td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill red">无</span></td>
+        <td>有微生物菌剂研发立项，与 ARC 体系尚未对接</td>
+        <td>★★☆☆☆</td>
+      </tr>
+      <tr>
+        <td><strong>新疆</strong></td>
+        <td>"南豆北引"国家试点</td>
+        <td><span class="pill dim">无</span></td>
+        <td><span class="pill red">无</span></td>
+        <td><strong>技术障碍</strong>：碱性土壤需要中华根瘤菌属，ARC 现有配方针对酸/中性土；要进入需改良</td>
+        <td>★☆☆☆☆</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="h-sec">补贴与专项资金线索</h2>
+  <div class="grid grid-3">
+    <div class="card">
+      <h3 class="h-sub">大豆完全成本保险</h3>
+      <p class="subtle">2024 黑龙江/内蒙古全域 → 2025 全国 → 2026 全覆盖。中西部+东北中央补贴 45%、东部 35%，加省级≥25%，<strong>总补贴 70-80%</strong>。这是 ARC 落地最大的"风险垫"。</p>
+    </div>
+    <div class="card green">
+      <h3 class="h-sub">黑龙江 ARC + 根瘤菌补贴</h3>
+      <p class="subtle"><strong>6 元/亩</strong>（5 元菌剂 + 1 元服务费）。覆盖 5 万亩+ 大豆种植县。<br><span style="color:var(--green)">✓ 2026 续作已确认</span>——黑龙江省发布《2026 年大豆根瘤菌菌剂接种技术示范推广项目实施方案》，标准维持 6 元/亩不变。但补贴仍限"根瘤菌菌剂"名义，<strong>ARC 复合菌剂未单独纳入省级补贴</strong>（命名仍是关键缺口）。</p>
+    </div>
+    <div class="card">
+      <h3 class="h-sub">国家自然科学基金 · 根际微生物专项</h3>
+      <p class="subtle">2024 设立"根际微生物促进豆科植物结瘤固氮与增产的机制"专项。<strong>这是李培武团队继续做基础研究的资金源</strong>，对长期价值很关键。</p>
+    </div>
+    <div class="card">
+      <h3 class="h-sub">湖北省 2023 重大科技项目</h3>
+      <p class="subtle">"ARC 生物菌剂研发及产业化"已被列为湖北省 2023 重大科技项目。<strong>这是新洋丰拿到地方政府背书的关键文件</strong>。</p>
+    </div>
+    <div class="card">
+      <h3 class="h-sub">大豆生产者补贴</h3>
+      <p class="subtle">与完全成本保险联动，财政部+农业农村部+金融监管总局三家管。属于"农户口袋"补贴，间接支撑 ARC 用得起。</p>
+    </div>
+    <div class="card">
+      <h3 class="h-sub">其他省级补贴</h3>
+      <p class="subtle">河南、山东、河北、安徽、湖北、辽宁——均无单列根瘤菌补贴。结论：<strong>ARC 在国内的"补贴政治资源"集中在黑龙江一个省</strong>。</p>
+    </div>
+  </div>
+
+  <h2 class="h-sec">战略判断</h2>
+  <div class="grid grid-2">
+    <div class="card green">
+      <h3 class="h-sub">最有机会的三个突破口</h3>
+      <ol style="margin:0">
+        <li><span class="pill amber">★★★★★</span> <strong>巩固黑龙江</strong>：把"暂定 6 元"做成正式补贴目录条目；同时争取从 6 → 8 元/亩。</li>
+        <li><span class="pill amber">★★★★</span> <strong>突破河南</strong>：兰考 + 正阳 + 方城三个示范一起打包，推动"ARC"字样进入《河南省农业主推技术目录 2026 版》。</li>
+        <li><span class="pill amber">★★★</span> <strong>显化内蒙古</strong>：把兴安盟 300 万亩生物育种大豆推广转化为自治区层面的政策文件。</li>
+      </ol>
+    </div>
+    <div class="card red">
+      <h3 class="h-sub">最容易失去的阵地</h3>
+      <ul style="margin:0">
+        <li><strong>风险一</strong>：山东、河北被"通用根瘤菌"吸收 — 文件里只有"根瘤菌"三个字，<span style="color:var(--red)">任何竞品都可以共用补贴语境</span>。</li>
+        <li><strong>风险二</strong>：黑龙江补贴因预算缩水 — 2025 年仍标"暂定"，等待中央下达资金。</li>
+        <li><strong>风险三</strong>：放弃了核心阵地却铺得太平 — 不要碰安徽、辽宁、湖北。把资源压在五省圈做强。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =============== HONORS =============== -->
+<section id="honors">
+  <div class="chapter-no">II ／ 荣誉地图</div>
+  <h1 class="h-page">四条并行的轨道</h1>
+  <p class="lede">
+    中国农业科技荣誉<strong>不是一条单线阶梯</strong>。它是四条相互独立、相互喂养的并行轨道——
+    <span style="color:var(--amber)">个人荣誉</span>、
+    <span style="color:var(--red)">国家级科技奖</span>、
+    <span style="color:var(--violet)">部省级奖</span>、
+    <span style="color:var(--green)">推广应用 / 国家叙事</span>。
+    理解李培武团队 + ARC 的真实位置，要把这四条轨道一起看：每一条都已经走得很远，而且四条线之间存在<strong>明显的"互相拉动"关系</strong>。
+  </p>
+
+  <div class="topbar" style="background:linear-gradient(90deg,rgba(96,165,250,.08),rgba(167,139,250,.06));border-color:rgba(96,165,250,.25)">
+    <div class="icon" style="color:var(--blue)">ⓘ</div>
+    <div>
+      <strong>逻辑关键</strong>：之前用"6 阶单线阶梯"是错的。比如李培武院士 (2019) 不是"等冲完科技奖再冲"，而是<u>同时拉动了 2024 五一劳动奖章 + 2025 全国先进工作者</u>；ARC 主推 (2023) 也不是"6 阶第二阶"，而是<u>启动了项目轨道，进而引出 2024 引领性 + 2025 中关村论坛 + 2025 黑龙江补贴</u>。荣誉之间的关系是"喂养"而不是"升级"。
+    </div>
+  </div>
+
+  <h2 class="h-sec">四条轨道时间线（1995 → 2030）</h2>
+  <p class="subtle muted">实心圆 = 已获得，空心圆 = 未来潜在；细虚线 = 跨轨道喂养关系；颜色对应轨道。</p>
+  <div class="card" style="padding:20px">
+    <svg viewBox="0 0 1120 560" id="swimlane" style="width:100%;height:auto;display:block;font-family:inherit">
+      <defs>
+        <pattern id="laneGrid" width="50" height="100" patternUnits="userSpaceOnUse">
+          <path d="M 50 0 L 0 0 0 100" fill="none" stroke="#ebe8df" stroke-width="0.4"/>
+        </pattern>
+      </defs>
+
+      <!-- 4 条 swim lane 背景 -->
+      <rect x="120" y="60"  width="940" height="100" fill="#fef9ef" stroke="#fcd9a8" rx="6"/>
+      <rect x="120" y="170" width="940" height="100" fill="#fff7f8" stroke="#fecdd3" rx="6"/>
+      <rect x="120" y="280" width="940" height="100" fill="#faf8ff" stroke="#ddd6fe" rx="6"/>
+      <rect x="120" y="390" width="940" height="100" fill="#f4fdf8" stroke="#a7f3d0" rx="6"/>
+
+      <!-- Lane 标签 -->
+      <text x="110" y="115" text-anchor="end" fill="#f59e0b" font-size="12.5" font-weight="700">个人荣誉</text>
+      <text x="110" y="130" text-anchor="end" fill="#908d84" font-size="9.5">Personal honors</text>
+      <text x="110" y="225" text-anchor="end" fill="#f87171" font-size="12.5" font-weight="700">国家级科技奖</text>
+      <text x="110" y="240" text-anchor="end" fill="#908d84" font-size="9.5">National sci-tech awards</text>
+      <text x="110" y="335" text-anchor="end" fill="#a78bfa" font-size="12.5" font-weight="700">部省级奖</text>
+      <text x="110" y="350" text-anchor="end" fill="#908d84" font-size="9.5">Ministry / Provincial</text>
+      <text x="110" y="445" text-anchor="end" fill="#34d399" font-size="12.5" font-weight="700">推广 / 国家叙事</text>
+      <text x="110" y="460" text-anchor="end" fill="#908d84" font-size="9.5">Promotion / National narrative</text>
+
+      <!-- 时间轴 -->
+      <line x1="120" y1="510" x2="1060" y2="510" stroke="#d4d2c8" stroke-width="1.5"/>
+      <g font-size="10.5" fill="#908d84" font-family="SF Mono,monospace">
+        <line x1="120" y1="508" x2="120" y2="514" stroke="#a3aab8"/>
+        <text x="120" y="528" text-anchor="middle">1995</text>
+        <line x1="254" y1="508" x2="254" y2="514" stroke="#a3aab8"/>
+        <text x="254" y="528" text-anchor="middle">2000</text>
+        <line x1="389" y1="508" x2="389" y2="514" stroke="#a3aab8"/>
+        <text x="389" y="528" text-anchor="middle">2005</text>
+        <line x1="523" y1="508" x2="523" y2="514" stroke="#a3aab8"/>
+        <text x="523" y="528" text-anchor="middle">2010</text>
+        <line x1="657" y1="508" x2="657" y2="514" stroke="#a3aab8"/>
+        <text x="657" y="528" text-anchor="middle">2015</text>
+        <line x1="791" y1="508" x2="791" y2="514" stroke="#a3aab8"/>
+        <text x="791" y="528" text-anchor="middle">2020</text>
+        <line x1="926" y1="508" x2="926" y2="514" stroke="#a3aab8"/>
+        <text x="926" y="528" text-anchor="middle">2025</text>
+        <line x1="1060" y1="508" x2="1060" y2="514" stroke="#a3aab8"/>
+        <text x="1060" y="528" text-anchor="middle">2030</text>
+      </g>
+
+      <!-- "今天" 竖线 -->
+      <line x1="940" y1="60" x2="940" y2="510" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="3 3" opacity=".55"/>
+      <text x="940" y="55" text-anchor="middle" fill="#b45309" font-size="11" font-weight="700" font-family="SF Mono,monospace">今天 (2026.04)</text>
+
+      <!-- =================== 跨轨道喂养连线 (虚线) =================== -->
+      <!-- 国家技术发明奖 (2015 红 lane2) → 中华农业英才奖 (2018 橙 lane1) -->
+      <path d="M 657,200 Q 700,160 738,130" stroke="#a3aab8" stroke-width="1" stroke-dasharray="3 3" fill="none" opacity=".5"/>
+      <!-- 中华农业英才奖 (2018) → 院士 (2019) [同 lane 但相邻] -->
+      <path d="M 738,110 L 765,110" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 2" fill="none" opacity=".55"/>
+      <!-- 院士 (2019) → 五一劳动奖章 (2024) [同 lane] -->
+      <path d="M 765,110 Q 832,85 899,110" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 2" fill="none" opacity=".55"/>
+      <!-- 院士 (2019) → 先进工作者 (2025) [同 lane] -->
+      <path d="M 765,110 Q 845,85 926,110" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 2" fill="none" opacity=".5"/>
+      <!-- 院士 (2019) → ARC 主推 (2023) 跨橙→绿 -->
+      <path d="M 765,135 Q 820,260 872,440" stroke="#a3aab8" stroke-width="1" stroke-dasharray="3 3" fill="none" opacity=".4"/>
+      <!-- ARC 主推 (2023 绿) → 引领性 (2024 绿) -->
+      <path d="M 872,440 L 899,440" stroke="#34d399" stroke-width="1.5" stroke-dasharray="3 2" fill="none" opacity=".6"/>
+      <!-- 引领性 (2024) → 中关村 (2025) -->
+      <path d="M 899,440 L 926,440" stroke="#34d399" stroke-width="1.5" stroke-dasharray="3 2" fill="none" opacity=".6"/>
+      <!-- 中关村 (2025) → 黑龙江补贴 (2025) [同年同 lane] -->
+      <path d="M 926,425 L 926,460" stroke="#34d399" stroke-width="1.2" stroke-dasharray="3 2" fill="none" opacity=".5"/>
+      <!-- 国家技术发明奖 (2015) → 湖北技术发明 (2018 紫) -->
+      <path d="M 657,235 Q 700,290 738,330" stroke="#a3aab8" stroke-width="1" stroke-dasharray="3 3" fill="none" opacity=".4"/>
+
+      <!-- =================== Lane 1: 个人荣誉 (橙) =================== -->
+      <!-- 全国优秀科技工作者 ~2008 -->
+      <g><circle cx="469" cy="110" r="7" fill="#f59e0b" stroke="#fff" stroke-width="1.2"/>
+        <text x="469" y="142" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="600">优秀科技</text>
+        <text x="469" y="154" text-anchor="middle" fill="#908d84" font-size="9">工作者</text></g>
+      <!-- 百千万人才 ~2010 -->
+      <g><circle cx="523" cy="110" r="7" fill="#f59e0b" stroke="#fff" stroke-width="1.2"/>
+        <text x="523" y="86" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="600">百千万人才</text>
+        <text x="523" y="74" text-anchor="middle" fill="#908d84" font-size="9">国家级人选</text></g>
+      <!-- 全国农业先进个人 ~2012 -->
+      <g><circle cx="603" cy="110" r="7" fill="#f59e0b" stroke="#fff" stroke-width="1.2"/>
+        <text x="603" y="142" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="600">全国农业</text>
+        <text x="603" y="154" text-anchor="middle" fill="#908d84" font-size="9">先进个人</text></g>
+      <!-- 中华农业英才奖 2018 -->
+      <g><circle cx="738" cy="110" r="9" fill="#f59e0b" stroke="#fff" stroke-width="1.5"/>
+        <text x="738" y="86" text-anchor="middle" fill="#f59e0b" font-size="10.5" font-weight="700">中华农业英才奖</text>
+        <text x="738" y="74" text-anchor="middle" fill="#908d84" font-size="9">第六届 · 2018</text></g>
+      <!-- 中国工程院院士 2019.11 -->
+      <g><circle cx="765" cy="110" r="13" fill="#fbbf24" stroke="#fff" stroke-width="2"/>
+        <text x="765" y="142" text-anchor="middle" fill="#b45309" font-size="11.5" font-weight="800">院士 ★</text>
+        <text x="765" y="155" text-anchor="middle" fill="#fde68a" font-size="9">2019.11 农业学部</text></g>
+      <!-- 全国五一劳动奖章 2024 -->
+      <g><circle cx="899" cy="110" r="11" fill="#f59e0b" stroke="#fff" stroke-width="1.8"/>
+        <text x="899" y="86" text-anchor="middle" fill="#f59e0b" font-size="10.5" font-weight="700">五一劳动奖章</text>
+        <text x="899" y="74" text-anchor="middle" fill="#908d84" font-size="9">2024 全国</text></g>
+      <!-- 全国先进工作者 2025 -->
+      <g><circle cx="926" cy="110" r="11" fill="#f59e0b" stroke="#fff" stroke-width="1.8"/>
+        <text x="926" y="142" text-anchor="middle" fill="#f59e0b" font-size="10.5" font-weight="700">全国先进工作者</text>
+        <text x="926" y="155" text-anchor="middle" fill="#908d84" font-size="9">2025</text></g>
+      <!-- 未来：何梁何利 / 全国劳模 -->
+      <g><circle cx="1000" cy="110" r="9" fill="none" stroke="#a3aab8" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <text x="1000" y="86" text-anchor="middle" fill="#908d84" font-size="10">何梁何利 / 劳模</text>
+        <text x="1000" y="74" text-anchor="middle" fill="#b8b5ac" font-size="9">未来潜在</text></g>
+
+      <!-- =================== Lane 2: 国家级科技奖 (红) =================== -->
+      <!-- 国家科技进步奖三等 ~2003 -->
+      <g><circle cx="335" cy="220" r="7" fill="#f87171" stroke="#fff" stroke-width="1.2"/>
+        <text x="335" y="252" text-anchor="middle" fill="#be123c" font-size="10" font-weight="600">国家科技进步</text>
+        <text x="335" y="264" text-anchor="middle" fill="#908d84" font-size="9">三等（第四）· ~2003</text></g>
+      <!-- 中国专利奖优秀奖（第十六届 ~2014）-->
+      <g><circle cx="630" cy="220" r="8" fill="#f87171" stroke="#fff" stroke-width="1.2"/>
+        <text x="630" y="195" text-anchor="middle" fill="#be123c" font-size="10" font-weight="600">中国专利奖</text>
+        <text x="630" y="183" text-anchor="middle" fill="#908d84" font-size="9">第十六届优秀奖 · 2014</text></g>
+      <!-- 国家技术发明奖二等 2015 -->
+      <g><circle cx="657" cy="220" r="13" fill="#f87171" stroke="#fff" stroke-width="2"/>
+        <text x="657" y="252" text-anchor="middle" fill="#f87171" font-size="10.5" font-weight="700">国家技术发明奖二等 ★</text>
+        <text x="657" y="264" text-anchor="middle" fill="#fca5a5" font-size="9">2015 · 黄曲霉毒素检测</text></g>
+      <!-- 国家科技进步奖二等 多次（标记代表年份）-->
+      <g><circle cx="710" cy="220" r="9" fill="#f87171" stroke="#fff" stroke-width="1.5"/>
+        <text x="710" y="195" text-anchor="middle" fill="#be123c" font-size="10" font-weight="600">国家科技进步二等</text>
+        <text x="710" y="183" text-anchor="middle" fill="#908d84" font-size="9">多次 · 第一完成人</text></g>
+      <!-- 未来：ARC 整体冲国家科技进步奖一等 -->
+      <g><circle cx="1000" cy="220" r="11" fill="none" stroke="#f87171" stroke-width="1.8" stroke-dasharray="3 2"/>
+        <text x="1000" y="252" text-anchor="middle" fill="#be123c" font-size="10" font-weight="600">国家科技进步奖一等</text>
+        <text x="1000" y="264" text-anchor="middle" fill="#908d84" font-size="9">未来 · ARC 整体冲</text></g>
+
+      <!-- =================== Lane 3: 部省级奖 (紫) =================== -->
+      <!-- 湖北省技术发明奖一等 2018 -->
+      <g><circle cx="738" cy="330" r="10" fill="#a78bfa" stroke="#fff" stroke-width="1.5"/>
+        <text x="738" y="305" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="600">湖北省技术发明一等</text>
+        <text x="738" y="293" text-anchor="middle" fill="#908d84" font-size="9">2018 · 第一完成人</text></g>
+      <!-- 湖北省科技成果一等 2018 -->
+      <g><circle cx="755" cy="358" r="7" fill="#a78bfa" stroke="#fff" stroke-width="1"/>
+        <text x="755" y="378" text-anchor="middle" fill="#a78bfa" font-size="9.5">湖北省科技成果一等</text>
+        <text x="755" y="389" text-anchor="middle" fill="#908d84" font-size="9">2018</text></g>
+      <!-- 湖南省技术发明奖一等 -->
+      <g><circle cx="630" cy="330" r="8" fill="#a78bfa" stroke="#fff" stroke-width="1.2"/>
+        <text x="630" y="305" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="600">湖南省技术发明一等</text>
+        <text x="630" y="293" text-anchor="middle" fill="#908d84" font-size="9">第一完成人</text></g>
+      <!-- 湖北省发明一等 -->
+      <g><circle cx="600" cy="330" r="7" fill="#a78bfa" stroke="#fff" stroke-width="1"/>
+        <text x="600" y="358" text-anchor="middle" fill="#a78bfa" font-size="9.5">湖北省发明一等</text></g>
+      <!-- 中华农业科技优秀创新团队奖 ~2018 -->
+      <g><circle cx="800" cy="358" r="7" fill="#a78bfa" stroke="#fff" stroke-width="1"/>
+        <text x="820" y="362" fill="#a78bfa" font-size="9.5">中华农业科技 · 优秀创新团队奖</text></g>
+      <!-- 未来：神农中华农业科技奖 -->
+      <g><circle cx="1000" cy="330" r="10" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-dasharray="3 2"/>
+        <text x="1000" y="305" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="600">神农中华农业科技奖</text>
+        <text x="1000" y="293" text-anchor="middle" fill="#908d84" font-size="9">未来潜在</text></g>
+      <!-- 未来：湖北专利奖金奖 -->
+      <g><circle cx="1000" cy="358" r="8" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <text x="1000" y="378" text-anchor="middle" fill="#a78bfa" font-size="9.5">湖北省专利奖金奖</text></g>
+
+      <!-- =================== Lane 4: 推广 / 国家叙事 (绿) =================== -->
+      <!-- ARC 主推技术 2023 -->
+      <g><circle cx="872" cy="440" r="11" fill="#34d399" stroke="#fff" stroke-width="1.8"/>
+        <text x="872" y="415" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700">ARC 全国主推技术</text>
+        <text x="872" y="403" text-anchor="middle" fill="#908d84" font-size="9">2023 · 农业农村部</text></g>
+      <!-- ARC 重大引领性技术 2024 -->
+      <g><circle cx="899" cy="440" r="11" fill="#34d399" stroke="#fff" stroke-width="1.8"/>
+        <text x="899" y="468" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700">十大重大引领性技术</text>
+        <text x="899" y="480" text-anchor="middle" fill="#908d84" font-size="9">2024 · 全国仅 10 项</text></g>
+      <!-- 中关村论坛重大成果 2025.03 -->
+      <g><circle cx="926" cy="440" r="13" fill="#34d399" stroke="#fff" stroke-width="2"/>
+        <text x="926" y="415" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700">中关村论坛 · 重大成果</text>
+        <text x="926" y="403" text-anchor="middle" fill="#908d84" font-size="9">2025.03.31</text></g>
+      <!-- 黑龙江 ARC + 根瘤菌补贴 2025 -->
+      <g><circle cx="926" cy="468" r="8" fill="#34d399" stroke="#fff" stroke-width="1.2"/>
+        <text x="975" y="472" fill="#34d399" font-size="9.5">黑龙江 6 元/亩补贴 (2025)</text></g>
+      <!-- 湖北省 2023 重大科技项目 -->
+      <g><circle cx="872" cy="468" r="7" fill="#34d399" stroke="#fff" stroke-width="1"/>
+        <text x="872" y="486" text-anchor="middle" fill="#34d399" font-size="9.5">湖北重大科技项目</text></g>
+
+      <!-- 未来：丰收奖一等 -->
+      <g><circle cx="1000" cy="440" r="13" fill="none" stroke="#34d399" stroke-width="2" stroke-dasharray="3 2"/>
+        <text x="1000" y="415" text-anchor="middle" fill="#34d399" font-size="10.5" font-weight="700">丰收奖一等 ★</text>
+        <text x="1000" y="403" text-anchor="middle" fill="#908d84" font-size="9">下一冲刺</text></g>
+      <!-- 未来：央视报道 / 一号文件 -->
+      <g><circle cx="1040" cy="468" r="7" fill="none" stroke="#34d399" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <text x="1040" y="486" text-anchor="middle" fill="#34d399" font-size="9.5">央视 / 一号文件</text></g>
+
+      <!-- 图例 -->
+      <g transform="translate(130,544)" font-size="10" fill="#908d84">
+        <circle cx="0" cy="0" r="6" fill="#34d399"/>
+        <text x="11" y="3">已获得</text>
+        <circle cx="80" cy="0" r="6" fill="none" stroke="#a3aab8" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <text x="91" y="3">未来潜在</text>
+        <line x1="180" y1="0" x2="220" y2="0" stroke="#a3aab8" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="226" y="3">轨道间喂养关系</text>
+      </g>
+    </svg>
+  </div>
+
+  <h2 class="h-sec">四条轨道之间的"喂养"逻辑</h2>
+  <div class="grid grid-2">
+    <div class="card amber">
+      <h3 class="h-sub">国家科技奖 → 个人荣誉（已发生）</h3>
+      <p class="subtle"><strong>2015 国家技术发明奖二等</strong>（黄曲霉毒素检测）→ <strong>2018 中华农业英才奖</strong> → <strong>2019 院士</strong> → <strong>2024 五一劳动奖章</strong> → <strong>2025 全国先进工作者</strong>。这是一条 10 年的连锁反应，每一步把上一步的资本变现为更高一阶的位置。</p>
+    </div>
+    <div class="card green">
+      <h3 class="h-sub">个人荣誉 → 项目轨道（已发生）</h3>
+      <p class="subtle">院士身份（2019）是 ARC 进入 <strong>2023 主推技术 → 2024 重大引领性 → 2025 中关村论坛</strong> 的隐性背书。没有院士这层身份，ARC 走不到"全国仅 10 项"的位次。</p>
+    </div>
+    <div class="card violet">
+      <h3 class="h-sub">部省奖 → 国家奖（曾发生）</h3>
+      <p class="subtle"><strong>湖北省技术发明一等（2018）→ 国家技术发明奖二等（2015，更早）</strong>是反向证明：李培武团队在湖北的省级奖项是后续多次国家奖的"地方政治资源积累"。下一轮：<strong>湖北专利奖金奖 → 神农中华农业科技奖 → 国家科技进步奖一等</strong>。</p>
+    </div>
+    <div class="card red">
+      <h3 class="h-sub">推广轨道 → 国家奖（即将发生）</h3>
+      <p class="subtle">ARC 推广已满 5 年（2020 起），<strong>2025 黑龙江 6 元/亩补贴</strong>提供了全国首个"政府现金补贴"证据。这是<strong>下一步冲国家科技进步奖一等</strong>的关键加分项——国家奖最看重"大面积推广 + 政府认证"。</p>
+    </div>
+  </div>
+
+  <h2 class="h-sec">已确认的荣誉清单（按时间倒序）</h2>
+  <p class="subtle muted">个人荣誉 + 国家科技奖 + 部省级奖 + 推广 / 国家叙事四条轨道全部已获项汇总。所有信息来自百度百科、中国工程院、中华全国总工会、农业农村部党委网等公开来源。</p>
+  <div class="table-wrap">
+  <table class="t">
+    <thead><tr><th style="width:90px">轨道</th><th style="width:110px">年份</th><th>荣誉名称</th><th>内容 / 来源</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill green">推广</span></td><td>2025</td><td><strong>黑龙江省 ARC + 根瘤菌补贴</strong>（6 元/亩）</td><td>全国唯一明确补贴；省农业农村厅 2025.04 实施方案</td></tr>
+      <tr><td><span class="pill amber">个人</span></td><td>2025</td><td><strong>全国先进工作者</strong></td><td>农业农村部党委 2025.05.15 报道；李培武 + 侯水生同获</td></tr>
+      <tr><td><span class="pill green">推广</span></td><td>2025.03.31</td><td><strong>中关村论坛重大科技成果发布</strong></td><td>李培武团队 + 新洋丰联合发布；论坛主调"原创性、引领性、国际性"</td></tr>
+      <tr><td><span class="pill amber">个人</span></td><td>2024</td><td><strong>全国五一劳动奖章</strong></td><td>中华全国总工会 2024.04.29 公示；2024 年度</td></tr>
+      <tr><td><span class="pill green">推广</span></td><td>2024</td><td>国家农业重大引领性技术（ARC）</td><td>农业农村部 · 2024 年度十大引领性技术之一（全国仅 10 项）</td></tr>
+      <tr><td><span class="pill green">推广</span></td><td>2023</td><td>全国农业主推技术（ARC）</td><td>农业农村部 · 2023 年度 150 项主推技术之一</td></tr>
+      <tr><td><span class="pill green">推广</span></td><td>2023</td><td>湖北省 2023 重大科技项目</td><td>"ARC 生物菌剂研发及产业化"立项</td></tr>
+      <tr><td><span class="pill amber">个人</span></td><td>2019.11</td><td><strong>中国工程院院士（农业学部）</strong></td><td>当选时 58 岁；中国工程院 2019.11.22</td></tr>
+      <tr><td><span class="pill violet">部省</span></td><td>2018</td><td>第六届中华农业英才奖</td><td>农业农村部颁；每届十名（第六届十一名）；奖金 20 万元/人</td></tr>
+      <tr><td><span class="pill violet">部省</span></td><td>2018</td><td>湖北省技术发明奖一等奖</td><td>《主要食用植物油料油脂特异品质检测技术及标准的研制与应用》—— 第一完成人</td></tr>
+      <tr><td><span class="pill violet">部省</span></td><td>2018</td><td>湖北省科技成果一等奖</td><td>—</td></tr>
+      <tr><td><span class="pill red">国家</span></td><td>2015</td><td><strong>国家技术发明奖二等奖</strong></td><td>《农产品黄曲霉毒素靶向抗体创制与高灵敏检测技术》—— 油料所第一完成单位 · 李培武第一完成人</td></tr>
+      <tr><td><span class="pill red">国家</span></td><td>~2014</td><td>第十六届中国专利奖优秀奖</td><td>《杂交瘤细胞株1C11、其产生的抗黄曲霉毒素通用单克隆抗体及其应用》</td></tr>
+      <tr><td><span class="pill red">国家</span></td><td>多次</td><td>国家科技进步奖二等奖（多次）</td><td>李培武团队在黄曲霉毒素检测、油料质量等领域多次获得，第一完成人</td></tr>
+      <tr><td><span class="pill violet">部省</span></td><td>—</td><td>湖南省技术发明奖一等奖</td><td>第一完成人</td></tr>
+      <tr><td><span class="pill violet">部省</span></td><td>—</td><td>湖北省发明一等奖</td><td>—</td></tr>
+      <tr><td><span class="pill violet">部省</span></td><td>—</td><td>中华农业科技 · 优秀创新团队奖</td><td>团队荣誉</td></tr>
+      <tr><td><span class="pill amber">个人</span></td><td>—</td><td>全国优秀科技工作者</td><td>—</td></tr>
+      <tr><td><span class="pill amber">个人</span></td><td>—</td><td>国家百千万人才工程国家级人选</td><td>—</td></tr>
+      <tr><td><span class="pill amber">个人</span></td><td>—</td><td>全国农业先进个人</td><td>—</td></tr>
+      <tr><td><span class="pill red">国家</span></td><td>~2003</td><td>国家科技进步奖三等奖</td><td>排名第四</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="h-sec">下一步申报路径 · 按四条轨道分别推进</h2>
+  <p class="subtle muted">不再是"单线晋级"，而是<strong>每条轨道独立推进，相互喂养</strong>。下面按"已饱和度"和"紧迫度"列出每条轨道的下一步。</p>
+  <div class="grid grid-2">
+    <div class="card amber">
+      <span class="pill amber">个人轨道 · 已极强</span>
+      <h3 class="h-sub">下一步：全国劳动模范 / 何梁何利奖</h3>
+      <p class="subtle">院士（2019）+ 五一劳动奖章（2024）+ 全国先进工作者（2025）三项核心个人荣誉<strong>已全部到手</strong>。下一阶可冲：</p>
+      <ul class="subtle" style="margin:0">
+        <li><strong>全国劳动模范</strong>（5 年一评，下一届 2030）— 全国先进工作者基础上的升级</li>
+        <li><strong>何梁何利基金科学与技术奖</strong>（年度）— 院士级科学家通用通道</li>
+        <li>中长期：未来国家最高科学技术奖（极小概率，需要终身性贡献）</li>
+      </ul>
+    </div>
+    <div class="card red">
+      <span class="pill red">国家科技奖轨道 · 已有底子</span>
+      <h3 class="h-sub">下一步：ARC 整体冲国家科技进步奖一等</h3>
+      <p class="subtle">2015 国家技术发明奖二等 + 多次国家科技进步奖二等都是黄曲霉毒素检测线。<strong>ARC 这条线的国家奖还未拿过</strong>。下一冲刺：</p>
+      <ul class="subtle" style="margin:0">
+        <li><strong>国家科技进步奖二等（ARC 专项）</strong>— 2-3 年内最现实</li>
+        <li><strong>国家科技进步奖一等（ARC 整体技术体系）</strong>— 5 年内目标，需"大面积推广 + 政府认证"</li>
+        <li><strong>国家技术发明奖（菌剂创新）</strong>— 与黄曲霉毒素那条线区分</li>
+      </ul>
+    </div>
+    <div class="card violet">
+      <span class="pill violet">部省级轨道 · 持续累积</span>
+      <h3 class="h-sub">下一步：神农奖 + 湖北省专利金奖</h3>
+      <p class="subtle">湖北省技术发明一等（2018）+ 中华农业英才奖（2018）+ 多个省级一等已成"地方政治资源"。下一步：</p>
+      <ul class="subtle" style="margin:0">
+        <li><strong>神农中华农业科技奖</strong>（2-3 年一届）— 二等以上可推荐参加国家奖</li>
+        <li><strong>湖北省专利奖金奖</strong>（5 年一评）— 针对 ARC 相关专利</li>
+        <li><strong>湖北省科技进步奖一等</strong>（年度）— ARC 在湖北落地后的省级奖</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <span class="pill green">推广轨道 · 12-18 个月最关键</span>
+      <h3 class="h-sub">下一步：全国农牧渔业丰收奖一等</h3>
+      <p class="subtle">这是 12-18 个月内<strong>最现实的部级最高推广奖</strong>。ARC 推广已满 5 年（2020 起），完全有资格申报。</p>
+      <ul class="subtle" style="margin:0">
+        <li>2020-2025 累计示范面积统计（按省、按品种）</li>
+        <li>新洋丰 ARC 复合肥年销售量、市场占有率</li>
+        <li>全国花生大豆增收总额、利税</li>
+        <li>≥10 家推广合作企业名单</li>
+        <li>各地农业部门出具的应用证明 + 黑龙江 6 元/亩补贴</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 class="h-sec">资料来源</h2>
+  <div class="card">
+    <ul class="subtle" style="margin:0">
+      <li><a href="https://baike.baidu.com/item/%E6%9D%8E%E5%9F%B9%E6%AD%A6/10704337" style="color:var(--blue)">李培武 · 百度百科</a> — 完整荣誉清单</li>
+      <li><a href="http://www.dangwei.moa.gov.cn/xxyd/202505/t20250515_6473984.htm" style="color:var(--blue)">农业农村部党委 · 全国先进工作者李培武 (2025.05.15)</a></li>
+      <li><a href="https://ysg.ckcest.cn/html/details/8139/index.html" style="color:var(--blue)">中国工程院院士馆 · 李培武</a></li>
+      <li><a href="https://news.sciencenet.cn/htmlnews/2019/8/427185.shtm" style="color:var(--blue)">2019 中国工程院院士增选</a></li>
+      <li><a href="https://m.ebiotrade.com/newsf/2016-1/2016122160729295.htm" style="color:var(--blue)">2015 国家技术发明奖：黄曲霉毒素检测</a></li>
+      <li>2024 全国五一劳动奖章：中华全国总工会 2024.04.29 公示</li>
+      <li>第六届中华农业英才奖：农业农村部 2018.11.11</li>
+    </ul>
+  </div>
+</section>
+
+<!-- =============== PEOPLE =============== -->
+<section id="people">
+  <div class="chapter-no">III ／ 关键人物</div>
+  <h1 class="h-page">内部商业化结构与外部博弈方</h1>
+  <p class="lede">
+    理解 ARC 项目的关键，是要分清两层结构：<br>
+    <strong style="color:var(--red)">内部</strong> — 院士团队及其商业化平台（沈俊、张奇、阿可生物、王女士的菌剂厂）；<br>
+    <strong style="color:var(--blue)">外部</strong> — 与油料所/团队对接的产业承接方（新洋丰）和监管/推广方（农业农村部、全国农技中心、地方厅）。<br>
+    "新洋丰独家"这件事，只是外部一层的描述。
+  </p>
+
+  <h2 class="h-sec">内部商业化结构 · 团队系闭环</h2>
+  <p class="subtle muted">这是大多数外部分析忽略的部分。院士团队的商业化并不是"等新洋丰来"，而是早已通过秘书 + 内部公司 + 外部菌剂厂建立了自己的供给端。</p>
+
+  <div class="card">
+    <svg viewBox="0 0 900 380" style="width:100%;height:auto;display:block;font-family:inherit">
+      <defs>
+        <linearGradient id="topGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(180,83,9,0.10)"/>
+          <stop offset="100%" stop-color="rgba(180,83,9,0.02)"/>
+        </linearGradient>
+      </defs>
+
+      <!-- 顶层 -->
+      <rect x="270" y="20" width="360" height="80" rx="14" fill="url(#topGrad)" stroke="#f59e0b" stroke-width="2"/>
+      <text x="450" y="48" text-anchor="middle" fill="#f59e0b" font-weight="800" font-size="16">院士团队 · 油料所</text>
+      <text x="450" y="70" text-anchor="middle" fill="#b45309" font-size="11.5">李培武院士 · 张奇主任（技术首席）· 沈俊（秘书+商业化）</text>
+      <text x="450" y="88" text-anchor="middle" fill="#908d84" font-size="10.5">代表 ARC 知识产权 / 国家级背书 / 学术权威</text>
+
+      <!-- 三条曲线 -->
+      <path d="M 380,100 Q 250,140 180,180" stroke="#34d399" stroke-width="2.2" fill="none"/>
+      <path d="M 450,100 L 450,180" stroke="#a78bfa" stroke-width="2.2" fill="none"/>
+      <path d="M 520,100 Q 650,140 720,180" stroke="#f87171" stroke-width="2.2" fill="none"/>
+
+      <!-- 三个分支 -->
+      <rect x="50" y="180" width="260" height="100" rx="12" fill="#ecfdf5" stroke="#34d399" stroke-width="1.5"/>
+      <text x="180" y="208" text-anchor="middle" fill="#34d399" font-weight="700" font-size="14">阿可生物</text>
+      <text x="180" y="226" text-anchor="middle" fill="#047857" font-size="11">团队系公司 · 法人：沈俊</text>
+      <text x="180" y="248" text-anchor="middle" fill="#595650" font-size="10.5">菌种保藏 / 制剂研发 / 部分商业化</text>
+      <text x="180" y="266" text-anchor="middle" fill="#94a3b8" font-size="10">团队对外的"自己人通道"</text>
+
+      <rect x="320" y="180" width="260" height="100" rx="12" fill="#f5f3ff" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="450" y="208" text-anchor="middle" fill="#a78bfa" font-weight="700" font-size="14">王女士 · 外部菌剂厂</text>
+      <text x="450" y="226" text-anchor="middle" fill="#c4b5fd" font-size="11">原生物菌剂行业人</text>
+      <text x="450" y="248" text-anchor="middle" fill="#595650" font-size="10.5">自有菌剂生产能力</text>
+      <text x="450" y="266" text-anchor="middle" fill="#94a3b8" font-size="10">团队对外的"产能备份通道"</text>
+
+      <rect x="590" y="180" width="260" height="100" rx="12" fill="#fff1f2" stroke="#f87171" stroke-width="1.5"/>
+      <text x="720" y="208" text-anchor="middle" fill="#f87171" font-weight="700" font-size="14">新洋丰（000902）</text>
+      <text x="720" y="226" text-anchor="middle" fill="#be123c" font-size="11">A 股复合肥龙头</text>
+      <text x="720" y="248" text-anchor="middle" fill="#595650" font-size="10.5">复合肥独家 + 渠道 + 资本</text>
+      <text x="720" y="266" text-anchor="middle" fill="#94a3b8" font-size="10">外部对外"独家"语境</text>
+
+      <!-- 底层市场 -->
+      <path d="M 180,280 Q 280,310 440,330" stroke="#34d399" stroke-width="1.2" fill="none" opacity=".55"/>
+      <path d="M 450,280 L 450,330" stroke="#a78bfa" stroke-width="1.5" fill="none" opacity=".55"/>
+      <path d="M 720,280 Q 600,310 460,330" stroke="#f87171" stroke-width="2.5" fill="none"/>
+
+      <rect x="280" y="330" width="340" height="36" rx="10" fill="#f7f5ef" stroke="#a3aab8" stroke-width="1"/>
+      <text x="450" y="355" text-anchor="middle" fill="#1a1612" font-weight="600" font-size="12.5">国内 / 海外农资市场 · 农户 · 政府采购</text>
+    </svg>
+    <p class="subtle muted" style="margin-top:14px"><strong>解读</strong>：新洋丰是体量最大的出口，但不是唯一出口。阿可生物 + 王女士的菌剂厂在"菌种、制剂、特殊渠道"上仍是团队自己的备份通道。这个结构是任何外部介入方必须先看懂的事实。</p>
+  </div>
+
+  <h2 class="h-sec">利益相关方结构</h2>
+  <p class="subtle muted">三层结构 + 四方监管/推广。<strong>新洋丰独家只覆盖复合肥这一种产品形式</strong>；菌种、衍生品、海外授权由团队内部通道掌握。</p>
+
+  <div class="org-chart">
+    <div class="org-tier" data-tier="技术源 · 院士团队">
+      <div class="org-box primary">
+        <div class="org-name">李培武</div>
+        <div class="org-role">中国工程院院士 · 第一权人</div>
+        <div class="org-tag">技术所有权 / 申报代表 / 政绩主体</div>
+      </div>
+      <div class="org-box primary">
+        <div class="org-name">张奇 主任</div>
+        <div class="org-role">技术首席</div>
+        <div class="org-tag">2015 国家技术发明奖第二完成人 · 27 项专利</div>
+      </div>
+      <div class="org-box primary">
+        <div class="org-name">沈俊</div>
+        <div class="org-role">院士秘书 · 商业化负责人</div>
+        <div class="org-tag flag-key">同时担任阿可生物法人</div>
+      </div>
+    </div>
+
+    <div class="org-arrow">
+      <span class="org-arrow-label">沈俊任法人 →</span>
+    </div>
+
+    <div class="org-tier" data-tier="团队系商业化通道">
+      <div class="org-box accent">
+        <div class="org-name">阿可生物</div>
+        <div class="org-role">团队系公司</div>
+        <div class="org-tag">菌种保藏 · 制剂研发 · 部分商业化 · 「自己人通道」</div>
+      </div>
+      <div class="org-box accent">
+        <div class="org-name">王女士菌剂厂</div>
+        <div class="org-role">外部合作 · 产能备份</div>
+        <div class="org-tag">原生物菌剂行业人 · 不依赖新洋丰工厂</div>
+      </div>
+    </div>
+
+    <div class="org-arrow">
+      <span class="org-arrow-label">仅复合肥独家 ↓</span>
+    </div>
+
+    <div class="org-tier" data-tier="上市公司独家承接">
+      <div class="org-box external">
+        <div class="org-name">新洋丰农业科技</div>
+        <div class="org-role">000902 · A 股复合肥龙头</div>
+        <div class="org-tag">2024 营收 155.63 亿 · 2025 H1 +28.98% · 「高富专 ARC 菌剂专用肥」</div>
+      </div>
+    </div>
+
+    <div class="org-arrow">
+      <span class="org-arrow-label">向市场出货 ↓</span>
+    </div>
+
+    <div class="org-tier" data-tier="终端市场">
+      <div class="org-box neutral">
+        <div class="org-name">国内 / 海外农资市场 · 农户 · 政府采购</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="h-sub">监管 / 推广 / 政策方</h3>
+  <div class="org-side-grid">
+    <div class="org-side-box">
+      <div class="org-side-label">最高背书</div>
+      <div class="org-side-name">农业农村部</div>
+      <div class="org-side-meta">科技司 · 种植业司 · 科教司</div>
+    </div>
+    <div class="org-side-box">
+      <div class="org-side-label">推广推手</div>
+      <div class="org-side-name">全国农技中心</div>
+      <div class="org-side-meta">3 次实打实收 · 2024/2025《农技行动专刊》入文</div>
+    </div>
+    <div class="org-side-box">
+      <div class="org-side-label">技术孵化方</div>
+      <div class="org-side-name">中国农科院油料所</div>
+      <div class="org-side-meta">所长：<strong>张扬勇</strong>（2025.03 上任）· 党委书记：马秀勇</div>
+    </div>
+    <div class="org-side-box">
+      <div class="org-side-label">地方政府方</div>
+      <div class="org-side-name">湖北 / 黑龙江 / 河南厅</div>
+      <div class="org-side-meta">湖北倾向新洋丰 · 黑龙江出补贴 · 河南是潜在盟友</div>
+    </div>
+  </div>
+
+  <h2 class="h-sec">9 个核心角色 · 详细画像</h2>
+
+  <details open>
+    <summary>① 李培武 院士 · 第一权人</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>身份</dt><dd>中国工程院院士（农业学部，2019.11.22 当选）；中国农科院油料所研究员、博士生导师；中共党员</dd>
+        <dt>出生</dt><dd>1961.11.05（山东省菏泽市成武县）；当选院士时 58 岁；现年 64 岁</dd>
+        <dt>学位</dt><dd>1978-1982 山东农学院农学系学士 → 1983-1986 南京农业大学物理生理生化硕士 → 2007 华中农业大学园艺林学博士</dd>
+        <dt>研究领域</dt><dd>农产品质量安全；黄曲霉毒素检测与控制；油料质量；微生物菌剂在油料作物上的应用</dd>
+        <dt>5 项核心任职</dt><dd>① 油料所研究员、博导；② 国家农业检测基准实验室（生物毒素）主任；③ 农业部生物毒素检测重点实验室主任；④ 农业部油料产品质量安全风险评估实验室（武汉）主任；⑤ 农业农村部农产品质量安全专家组生物毒素组组长</dd>
+        <dt>国际兼职</dt><dd>FAO/WHO JECFA 专家；GCIRC 理事；TOXINS 等国际期刊编委</dd>
+        <dt>代表性成就</dt><dd>2015 国家技术发明奖二等奖（第一完成人）；多次国家科技进步奖二等奖；2003 国家科技进步奖三等奖（第四完成人）；湖北 / 湖南省技术发明奖一等；42 项中国发明专利；11 项欧美日专利；40+ 国家与行业标准；255 篇论文（111 篇 SCI）；培养博士 29+ 名</dd>
+        <dt>政治身份</dt><dd>未公开担任全国政协委员或人大代表（公开搜索未确认）；荣誉性政治身份：2024 全国五一劳动奖章 + 2025 全国先进工作者（中共中央国务院 2025.04.29 表彰）</dd>
+        <dt>个人对外接口</dt><dd>大部分商业事务交沈俊处理；技术由张奇主任执行；李本人主要处理院士级别公开活动、上级汇报、奖项申报</dd>
+        <dt>在乎</dt><dd>学术声誉、个人传承（学生与团队接班）、国家级荣誉（下一阶：何梁何利奖 / 全国劳动模范 / 国家科技进步奖一等 / 神农奖）</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details open>
+    <summary>② 张奇 主任 · 技术首席</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>身份</dt><dd>中国农业科学院油料作物研究所研究员、博士生导师；李培武团队首席专家，负责 ARC 所有技术线</dd>
+        <dt>所内任职</dt><dd>农业部生物毒素检测重点实验室副主任；油料及农业部制品质检中心副主任</dd>
+        <dt>实际职能</dt><dd>菌种选育 / 配方 / 试验设计 / 申报材料技术部分 / 现场会技术讲解</dd>
+        <dt>历史背书</dt><dd><strong>2015 国家技术发明奖二等奖第二完成人</strong>（仅次于李培武）—— 这是张奇能稳坐"技术分身"位置的体制资本</dd>
+        <dt>科研成果</dt><dd><strong>27 项授权中国发明专利、12 项国际专利、73 篇 SCI 论文</strong>（第一或通讯作者）—— 与李培武团队论文体系深度绑定</dd>
+        <dt>对外角色</dt><dd>所有"技术问题"的最终解释人。任何与新洋丰、阿可生物、外部合作方的技术对接，都过张奇</dd>
+        <dt>在乎</dt><dd>技术方案能不能落地、菌种迭代是否被采纳、申报奖项里他能不能作为主要完成人之一</dd>
+        <dt>能给</dt><dd>技术权威 / 申报材料起草 / 现场会主持 / 试验数据出具</dd>
+        <dt>判断</dt><dd>张奇是李培武的"技术分身"。任何实质性技术合作（包括新菌种、衍生品开发、第二代 ARC 等）必须通过张奇。绕开张奇的合作都没有未来</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details open>
+    <summary>③ 沈俊 · 院士秘书 · 商业化负责人</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>身份</dt><dd>李培武院士秘书；目前负责团队所有商业化对接</dd>
+        <dt>实际职能</dt><dd>合同谈判 / 合作方筛选 / 内部公司运营 / 对外沟通排程 / 院士行程</dd>
+        <dt>关键事实</dt><dd><strong>同时担任阿可生物法人</strong>—— 这把"院士秘书"和"团队系商业实体"两个身份合二为一</dd>
+        <dt>对外角色</dt><dd>所有商业意向都先过沈俊。新洋丰的合作框架、地方政府现场会的协调、外部菌剂厂（王女士）的合作，都由沈俊牵头</dd>
+        <dt>在乎</dt><dd>团队商业利益最大化、自己在团队中的地位、阿可生物的成长</dd>
+        <dt>能给</dt><dd>对李培武的实际访问权 / 合作机会的优先评估 / 阿可生物作为合作主体的可能性</dd>
+        <dt>判断</dt><dd><strong>沈俊是真正的"项目商业化第一接口人"</strong>——比李培武本人更近、更可触达。任何外部介入方如果不能让沈俊看到"对阿可生物有好处 / 对团队商业版图有好处"，则这件事不会进入李培武的视野</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details open>
+    <summary>④ 阿可生物 · 团队系公司（法人：沈俊）</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>性质</dt><dd>李培武团队的"自己人公司"。法人为沈俊（即李培武秘书）</dd>
+        <dt>实际职能</dt><dd>菌种保藏 / 制剂中试 / 部分产品商业化 / 与外部合作方的合作主体</dd>
+        <dt>战略意义</dt><dd>团队不依赖油料所体制内通道、也不完全依赖新洋丰，可以自己持有股权、收取技术费、签外部合作</dd>
+        <dt>对新洋丰关系</dt><dd>表面是"配合关系"，实质是"备份通道"。新洋丰拿复合肥独家不等于阿可生物不能做菌剂直销 / 不能做衍生品 / 不能做海外授权</dd>
+        <dt>判断</dt><dd>阿可生物是<strong>团队对冲新洋丰垄断、保留商业话语权的核心工具</strong>。任何外部想合作的，可以绕开新洋丰、直接和阿可生物谈——前提是沈俊愿意</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details>
+    <summary>⑤ 王女士 · 外部菌剂厂合作</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>身份</dt><dd>原生物菌剂行业从业者；自有菌剂生产厂</dd>
+        <dt>与团队关系</dt><dd>与院士团队 / 阿可生物有外部合作；提供生产能力</dd>
+        <dt>战略意义</dt><dd>给团队提供了"产能备份"——不必完全依赖新洋丰的复合肥工厂；菌剂可以独立生产、独立销售</dd>
+        <dt>潜在张力</dt><dd>王女士的工厂如果被外部资本收购或扩产，可以成为团队"另起炉灶"的物理基础</dd>
+        <dt>判断</dt><dd>王女士这条线的存在说明<strong>团队商业化已不是"唯一通道"模型</strong>。这一点在新洋丰的对外叙事里几乎从未被提及，但是真实存在的备份</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details>
+    <summary>⑥ 中国农业科学院油料所 · 技术孵化方</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>成立</dt><dd>1960 年；在湖北武汉</dd>
+        <dt>隶属</dt><dd>农业农村部 → 中国农业科学院</dd>
+        <dt>规模</dt><dd>油料作物基础研究全国第一序列；ARC 应用面积 4000 万亩+</dd>
+        <dt><strong>2025 最新领导班子</strong></dt><dd>
+          ▸ <strong>所长：张扬勇</strong>（2025.03 上任，原蔬菜花卉所副所长，江西永丰人 1977 年生，国家科技进步二等奖获得者）<br>
+          ▸ <strong>党委书记：马秀勇</strong>（2022.06，原直属机关党委副书记）<br>
+          ▸ 党委副书记/纪委书记：张银波（2023.06）<br>
+          ▸ 副所长：王新发、邓乾春（均 2023.11 上任）<br>
+          <span style="color:var(--amber)">⚠ 注意：黄凤洪已不再是所长（2025.03 后由张扬勇接任）</span>
+        </dd>
+        <dt>转化机制</dt><dd>完全转让 / 独家许可 / 普通许可 / 合作开发；李培武团队与新洋丰是"普通许可 + 合作开发"组合（"菌载肥"技术研发合作）</dd>
+        <dt>在研项目</dt><dd>与新洋丰联合承担"十四五"国家重点研发计划"黑土障碍消减"项目；共同开发"双调控双控制"技术；<strong>2026.03 李培武团队在 Nature Communications 发表黄曲霉产毒素研究</strong></dd>
+        <dt>2026 重要动态</dt><dd>
+          ▸ 2026.04 油菜新品种"中油早 5 号"江西信丰推广<br>
+          ▸ 2026.03 全球首个植物源甲基硒生物合成中试平台武汉启动<br>
+          ▸ 2026.03 中豆 73 / 中豆 81 以 1500 万元转让青岛清原种子<br>
+          ▸ 2025.10 ARC 助力盐碱地大豆增产
+        </dd>
+        <dt>关键签字权</dt><dd>张扬勇所长、马秀勇党委书记、副所长班子、成果转化处主任 — 这几个角色对所有商业化合同有最终签字权</dd>
+        <dt>判断</dt><dd>所里对内部商业化结构（阿可生物 + 王女士）保持知情但不深度介入。这是"院士特权"——所里只要能拿到该有的转化分成 + 政绩，不会主动插手。<strong>2025.03 张扬勇接任所长是关键变量</strong>：作为蔬菜花卉所背景的新所长，他与李培武团队的磨合期值得观察</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details>
+    <summary>⑦ 新洋丰农业科技股份有限公司（000902） · 复合肥独家</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>上市</dt><dd>深交所主板，000902</dd>
+        <dt>总部</dt><dd>湖北荆门 + 北京</dd>
+        <dt>行业地位</dt><dd>2025 化肥品牌排行 <strong>全国第一</strong>（高浓度磷复肥龙头）</dd>
+        <dt>2024 全年</dt><dd>营收 155.63 亿（+3.07%）；归母净利 13.15 亿（+8.99%）；研发投入 <strong>2.44 亿</strong>（+48.79%）</dd>
+        <dt>2025 H1</dt><dd>营收 93.98 亿（<span style="color:var(--green)">+11.63%</span>）；归母净利 9.51 亿（<span style="color:var(--green)">+28.98%</span>）；Q1 复合肥销量 +35%</dd>
+        <dt>2025 Q3 累计</dt><dd>营收 134.75 亿（+8.96%）；归母净利 13.74 亿（+23.43%）；新型肥销量 +24%</dd>
+        <dt>新型肥料结构</dt><dd>2024 销量 138 万吨；占复合肥销量 31.67%、收入 38.18%；2018-2024 CAGR 16.63%；ARC 是新型肥的核心产品之一</dd>
+        <dt>研发队伍</dt><dd>研发人员占比 8.42%；本科 269 人（+50）、硕士 159 人（+31，对比 2023）；博士人数未单独披露</dd>
+        <dt>融资</dt><dd>2021.03 发行可转债 10 亿（"洋丰转债" 127031）；2025.06 投资蚌埠淮上化工园区 11.5 亿元</dd>
+        <dt>现任高管</dt><dd>董事长 <strong>杨才学</strong>（高级经济师）；副董事长兼总裁 <strong>杨华锋</strong>（高级工程师）；董事兼总裁 黄镔；总工程师 汤三洲；董事会秘书 魏万炜</dd>
+        <dt>与 ARC 关系</dt><dd>2023.07 与油料所战略合作 → 2024 锁定"ARC 复合肥领域唯一独家"→ 2025.03 中关村论坛联合发布（论坛唯一农业类成果）；已开发"高富专 ARC 菌剂专用肥"</dd>
+        <dt>ARC 业务披露</dt><dd>新洋丰对 ARC 累计投资额、ARC 复合肥单项销量收入<strong>均未单独披露</strong>（这是分析的最大盲点）</dd>
+        <dt>"独家"边界</dt><dd>仅限<strong>复合肥这种产品形式</strong>。菌种本身、菌剂直销、种衣剂、海外授权、衍生产品 —— 这些权利<strong>不在新洋丰独家范围内</strong></dd>
+        <dt>潜在动作</dt><dd>大概率会在 2026 年内尝试把"独家"扩大——技术入股、合资公司、收购菌剂厂等。这是内部张力的最大触发点</dd>
+        <dt>风险提示</dt><dd>2024.01 荆门新洋丰中磷肥业环保违规罚 6 万元；2024 物流子公司轻微违规——均不涉及核心业务合规</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details>
+    <summary>⑧ 全国农业技术推广服务中心 · 政策推手</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>隶属</dt><dd>农业农村部直属事业单位</dd>
+        <dt>对 ARC 动作</dt><dd>3 次实打实收（黑龙江爱辉 / 湖北天门 / 河南兰考）；2024 第10期、2025 第3期《农技行动专刊》入文</dd>
+        <dt>关键处室</dt><dd>粮油处（负责对接 ARC）</dd>
+        <dt>商业利益冲突</dt><dd><span class="pill green">无</span> — 这是项目里最容易接近、最不会"反水"的一家</dd>
+        <dt>对外可塑性</dt><dd>该中心愿意接收任何能给"农技推广业绩"加分的素材。任何外部介入方都可以通过非交易方式建立非交易型关系</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details>
+    <summary>⑨ 农业农村部相关司局 + 地方厅</summary>
+    <div class="body">
+      <h4>农业农村部内部</h4>
+      <ul>
+        <li><strong>科学技术司</strong>：负责"主推技术 / 重大引领性技术"评选——ARC 已通过这两关</li>
+        <li><strong>种植业管理司</strong>：负责"大豆油料产能提升工程"——ARC 是其推荐技术之一</li>
+        <li><strong>科技教育司</strong>：负责科技成果转化政策、对外合作</li>
+        <li><strong>农产品质量安全监管司</strong>：李培武院士长期对接的部门（黄曲霉毒素监管业务线）</li>
+      </ul>
+      <h4>地方厅 · 三档</h4>
+      <ul>
+        <li><strong>黑龙江</strong>：唯一有 ARC + 根瘤菌补贴的省。<span class="pill green">中性偏好</span></li>
+        <li><strong>河南 / 兰考</strong>：兰考考城镇万亩示范的承接方；县级主政官员是潜在盟友。<span class="pill green">潜在盟友</span></li>
+        <li><strong>湖北</strong>：新洋丰总部所在地。省厅会优先支持本地龙头。<span class="pill red">倾向新洋丰</span></li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- =============== INTERESTS =============== -->
+<section id="interests">
+  <div class="chapter-no">IV ／ 利益链条</div>
+  <h1 class="h-page">内部闭环与外部独家</h1>
+  <p class="lede">
+    ARC 项目目前不是"一家技术 + 一家产业方"的简单两角关系。它是<strong>"院士团队的内部商业化闭环"和"新洋丰的外部独家协议"两层并行</strong>——而且这两层之间的边界还没完全划清。这是所有真实利益博弈的来源。
+  </p>
+
+  <h2 class="h-sec">两层利益结构</h2>
+  <div class="grid grid-2">
+    <div class="card green">
+      <div class="label">内部层 · 团队闭环</div>
+      <h3 class="h-sub">院士团队 + 阿可生物 + 王女士菌剂厂</h3>
+      <ul class="subtle" style="margin:0">
+        <li><strong>知识产权</strong>：李培武 / 张奇主导，油料所作为署名方</li>
+        <li><strong>菌种保藏</strong>：在团队 / 阿可生物手上</li>
+        <li><strong>制剂研发</strong>：阿可生物</li>
+        <li><strong>产能备份</strong>：王女士菌剂厂</li>
+        <li><strong>商业化决策</strong>：沈俊（秘书）作为日常接口</li>
+        <li><strong>院士影响力</strong>：李培武对外背书 / 申报代表 / 政绩主体</li>
+      </ul>
+      <p class="subtle muted" style="margin-top:8px"><strong>本质</strong>：这是一个团队系的"自循环"，可以独立于新洋丰存活</p>
+    </div>
+    <div class="card blue">
+      <div class="label">外部层 · 上市公司独家</div>
+      <h3 class="h-sub">新洋丰复合肥独家承接</h3>
+      <ul class="subtle" style="margin:0">
+        <li><strong>独家范围</strong>：仅"ARC 复合肥"产品形式</li>
+        <li><strong>渠道</strong>：30 万+ 农资经销商 / 全国生产基地</li>
+        <li><strong>资本</strong>：A 股上市公司 / 2024 年研发投入 2.44 亿（+48.79%）</li>
+        <li><strong>政绩绑定</strong>：湖北省 2023 重大科技项目；央视和新华网联合报道</li>
+        <li><strong>地方政治</strong>：湖北省厅、荆门市政府的本地龙头优先权</li>
+      </ul>
+      <p class="subtle muted" style="margin-top:8px"><strong>本质</strong>：这是 ARC 在中国大盘市场上最大、最快的出口</p>
+    </div>
+  </div>
+
+  <h2 class="h-sec">"在乎 / 给 / 要"对照表</h2>
+  <div class="table-wrap">
+  <table class="t">
+    <thead><tr><th style="width:140px">角色</th><th>在乎什么</th><th>能给什么</th><th>想要什么</th></tr></thead>
+    <tbody>
+      <tr><td><strong>李培武 院士</strong></td><td>学术声誉、传承、国家级最高荣誉</td><td>技术所有权、专利署名、上级背书、向上沟通通道</td><td>院士门徒接班、国家科技进步奖一等、传记式叙事</td></tr>
+      <tr><td><strong>张奇 主任</strong></td><td>技术方案落地、申报材料里的位置</td><td>技术权威、试验数据、菌种迭代</td><td>第二代 ARC 项目立项、个人申报奖项</td></tr>
+      <tr><td><strong>沈俊（秘书+商业化）</strong></td><td>团队商业利益最大化、阿可生物的成长、自己在团队的地位</td><td>李培武的访问权、合作机会的优先权、阿可生物作为合作主体</td><td>阿可生物拿到资本估值、团队商业化体系做大</td></tr>
+      <tr><td><strong>阿可生物</strong></td><td>融资、营收、衍生品 IP 持有</td><td>团队系合作通道、菌种保藏、商业化敏捷</td><td>独立融资 / 上市 / 被战略性收购</td></tr>
+      <tr><td><strong>王女士菌剂厂</strong></td><td>产能利用率、稳定订单</td><td>独立生产能力（不依赖新洋丰工厂）</td><td>规模化订单、可能与团队系深度绑定</td></tr>
+      <tr><td><strong>油料所</strong></td><td>科研声誉、转化分成、上级评价</td><td>转化批准权、国家推荐、法律签署</td><td>10-30% 转化费、长期合作、不出纠纷</td></tr>
+      <tr><td><strong>全国农技推广中心</strong></td><td>推荐科学性、年度业绩</td><td>国家级推荐、全国推广资源</td><td>成果有效、覆盖面广</td></tr>
+      <tr><td><strong>湖北省厅</strong></td><td>本地龙头发展、粮食增产政绩</td><td>地方推广、政策倾斜、补贴</td><td>新洋丰扩张、华中推广快</td></tr>
+      <tr><td><strong>黑龙江省厅</strong></td><td>大豆单产、补贴执行成效</td><td>6 元/亩补贴、示范县</td><td>ARC 落地稳、补贴留给本地</td></tr>
+      <tr><td><strong>新洋丰</strong></td><td>市场份额、技术壁垒、股价</td><td>资本、产能、渠道、品牌</td><td>把"独家"从复合肥扩大到菌种 / 衍生品 / 国际化；最理想是"技术入股"或"合资公司"</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="h-sec">三大潜在张力 · 内部博弈风险矩阵</h2>
+  <div class="risk-grid">
+    <div class="risk-cell r1">
+      <div class="lv">Level 1 · 极高</div>
+      <div class="ttl">新洋丰把"独家"扩大</div>
+      <p class="subtle">
+      新洋丰提议技术入股 / 合资公司 / 收购王女士菌剂厂 → 把目前的复合肥独家扩展到菌种、衍生品、国际化全口径。
+      <br><strong>触发信号</strong>：新洋丰新增 5 亿+ 涉 ARC 投资公告；湖北省层面"协调会"；阿可生物董事会变更。
+      <br><strong>团队应对</strong>：用阿可生物 + 王女士的存在做谈判筹码，让新洋丰为"扩大独家"付出更高对价。
+      </p>
+      <div class="meta"><span class="pill red">概率 60%</span><span class="pill red">影响 极高</span></div>
+    </div>
+    <div class="risk-cell r2">
+      <div class="lv">Level 2 · 高</div>
+      <div class="ttl">阿可生物 vs 新洋丰 · 边界争议</div>
+      <p class="subtle">
+      阿可生物开始做菌剂直销或种衣剂等衍生品 → 与新洋丰复合肥业务在终端渠道相遇 → 新洋丰认为侵权 → 反向施压油料所。
+      <br><strong>触发信号</strong>：阿可生物注册新产品 / 申请新菌剂登记证 / 开始进入农资经销渠道。
+      <br><strong>团队应对</strong>：明确划分产品形式边界——复合肥归新洋丰，纯菌剂 + 种衣剂归阿可生物。
+      </p>
+      <div class="meta"><span class="pill amber">概率 50%</span><span class="pill amber">影响 高</span></div>
+    </div>
+    <div class="risk-cell r3">
+      <div class="lv">Level 3 · 中</div>
+      <div class="ttl">国际大厂直接谈判</div>
+      <p class="subtle">
+      BASF / Bayer / Syngenta 出更高价（千万-亿美元级）→ 与团队直接谈全球独家 → 油料所被吸引签全球协议。
+      <br><strong>触发信号</strong>：李团队海外学术活动激增；新增国际企业合作论文；油料所对外合作办高层调动。
+      <br><strong>团队应对</strong>：用国际竞标制造价格弹性；同时保留中国主权技术叙事，避免完全外资化。
+      </p>
+      <div class="meta"><span class="pill blue">概率 40%</span><span class="pill red">影响 极高</span></div>
+    </div>
+  </div>
+
+  <h2 class="h-sec">官商结合的真实边界</h2>
+  <div class="card amber">
+    <p>这一节是最敏感、也是最值得理解的部分。在中国农业科技成果转化的实操中，"官""学""商"三端的结合通常通过几个隐性机制完成：</p>
+    <ul>
+      <li><strong>院士秘书 + 团队系公司</strong>：院士本人不可以直接持股，但秘书可以作为法人。这种结构让院士在合规上保持距离，又能让团队系公司承接商业化收入。<span style="color:var(--amber)">阿可生物（沈俊任法人）正是这种典型结构</span>。</li>
+      <li><strong>"独家许可"+ "排他性除外"</strong>：上市公司拿到"独家"通常仅限某一种产品形式（如复合肥），团队保留"未来产品形式"的开发权。这种结构让上市公司满足合规披露，但团队仍掌握 IP 主导权。</li>
+      <li><strong>外部生产合作（菌剂厂）</strong>：团队不绑定单一生产端，王女士这类外部菌剂厂提供"产能备份"，可以在与新洋丰谈判破裂时随时启用。</li>
+      <li><strong>地方政府背书 + 上市公司项目挂钩</strong>：湖北省"重大科技项目"立项给新洋丰提供本地政治资源；同时也让团队拿到省级科技专项的经费分成。</li>
+      <li><strong>"国家级推荐 / 主推技术"</strong>：通过部委层面的推荐而非直接补贴的方式给项目背书；这种背书在融资估值、上市公司股价、地方招商上都能折现。</li>
+    </ul>
+    <p class="subtle muted">这些机制本身在中国农业科技体制内是公开 / 半公开的标准做法，并非"灰色"。但理解这些机制，是任何外部介入方进入这个生态的前提。</p>
+  </div>
+</section>
+
+<!-- =============== GAP =============== -->
+<section id="gap">
+  <div class="chapter-no">V ／ 三口缺口</div>
+  <h1 class="h-page">政策、政绩、商业化</h1>
+  <p class="lede">
+    院士团队不是"什么都缺"。在政策口和政绩口上，他们已经有相当强的资源。<br>
+    <strong>真正缺的是商业化口</strong>——而且缺得很明显。任何想介入这个生态的外部方，必须先看清这三口的真实饱和度，找准那一口"缺人补又没人补"的位置。
+  </p>
+
+  <h2 class="h-sec">三口缺口饱和度</h2>
+  <div class="grid grid-3">
+    <div class="card green">
+      <div class="label">政策口</div>
+      <div class="num">85%<small>已饱和</small></div>
+      <p class="subtle">主推技术 + 重大引领性 + 中关村论坛已拿。剩 15% 缺口主要在国务院层面 / 央媒主流叙事 / 国家"十四五"专项。</p>
+    </div>
+    <div class="card amber">
+      <div class="label">政绩口</div>
+      <div class="num">70%<small>中等饱和</small></div>
+      <p class="subtle">院士（2019）+ 五一劳动奖章（2024）+ 全国先进工作者（2025）三大个人荣誉已全部到手；湖北省 2023 重大科技项目已立。剩 30% 缺口在国家科技进步奖一等 / 政协委员 / 全国劳动模范 / 何梁何利奖 / 团队接班人体系。</p>
+    </div>
+    <div class="card red">
+      <div class="label">商业化口</div>
+      <div class="num">35%<small>严重缺口</small></div>
+      <p class="subtle"><strong>这是项目最大的空缺</strong>。资本平台、国际化、衍生品类拓展、农户数据闭环——四个主要缺口都在这里。</p>
+    </div>
+  </div>
+
+  <h2 class="h-sec">政策口缺口 · 已饱和 85%</h2>
+
+  <div class="gap-table">
+    <div class="head">缺口</div>
+    <div class="head col-mid">具体内容</div>
+    <div class="head">谁能补 / 切入逻辑</div>
+
+    <div><strong>2026 中央一号文件指名 ARC</strong></div>
+    <div class="col-mid">2025 一号文件已提"微生物菌剂和酶制剂"，但未指名 ARC。如能在 2026 年一号文件里把"ARC"或"提质固氮耦合"作为示范案例写入，将是顶层政治叙事的最高一格</div>
+    <div class="who">中央农村工作领导小组办公室核心起草人 · 国务院发展研究中心农村经济研究部 · 农业农村部研究室主任 — 这几个角色是能把具体技术名字推进一号文件的人</div>
+
+    <div><strong>国务院级别专题报告 / 批示</strong></div>
+    <div class="col-mid">到目前为止 ARC 的最高级别背书是"农业农村部主推 + 中关村论坛"。但还没有国务院领导调研 / 批示的公开记录</div>
+    <div class="who">国务院办公厅秘书三局（农业口）· 国务院参事室 · 国务院发展研究中心 — 这条线的资源往往掌握在前任部级官员、智库高级研究员、央企高管手中</div>
+
+    <div><strong>央视主流频道叙事</strong></div>
+    <div class="col-mid">已有新华社 + 农民日报 + 经济日报报道。但 CCTV-1 新闻联播 / CCTV-2 财经频道 / CCTV-13 新闻频道的"国家粮油安全"专题里 ARC 还未出现</div>
+    <div class="who">央视农业农村频道（CCTV-17）专题部主任 · 新闻联播农业口编委 · 焦点访谈选题策划——通常通过部级宣传办、农业农村部办公厅、新华社总社联系</div>
+
+    <div><strong>"十五五"国家重点研发计划专项</strong></div>
+    <div class="col-mid">当前 ARC 主要靠"重大科技项目（湖北省级）"+ "国家自然基金根际微生物专项"。还缺一个真正的"国家重点研发计划专项"——这是<strong>科技部口</strong>的最高级别专项</div>
+    <div class="who">科技部农村科技司 · 中国农村技术开发中心 · 国家自然科学基金委 · 中国农科院科技局 — 切入点是"绿色农业 / 粮油安全 / 微生物组"等十五五重点方向的专题首席科学家</div>
+
+    <div><strong>农业农村部主管副部长亲自调研</strong></div>
+    <div class="col-mid">司级、处级、地方厅级调研都已有。但部主管副部长级（分管科教）亲自到田间调研的公开报道目前未见</div>
+    <div class="who">农业农村部办公厅秘书处 · 部党组成员秘书圈 · 科教司司长 — 通常需要"省里申请 + 部里安排 + 重要节点契机"配合</div>
+  </div>
+
+  <h2 class="h-sec">政绩口缺口 · 中等饱和 70%</h2>
+
+  <div class="gap-table">
+    <div class="head">缺口</div>
+    <div class="head col-mid">具体内容</div>
+    <div class="head">谁能补 / 切入逻辑</div>
+
+    <div><strong>国家科技进步奖一等</strong></div>
+    <div class="col-mid">团队历史上拿过国家技术发明奖二等奖（2015 黄曲霉毒素）。但 ARC 整体技术体系还没冲过国家奖一等</div>
+    <div class="who">国家科学技术奖励工作办公室 · 农业评审组院士 · 提名单位（中国农科院 / 农业农村部 / 中国工程院）— 关键是 5 名以上院士级专家提名 + 推荐单位的政治分量</div>
+
+    <div><strong>全国农牧渔业丰收奖一等</strong></div>
+    <div class="col-mid">已具备申报条件（推广满 5 年）。但申报材料里的"大面积推广证明 / 经济效益数据 / 农户认可文件"目前由新洋丰提供，<strong>团队自己没有独立的成果应用证明体系</strong></div>
+    <div class="who">能补这口的：（1）有专业奖项申报咨询经验的农业研究院（中国农科院科技局 / 中国农技推广协会）；（2）能提供独立第三方推广数据的机构（农业大数据公司、农业 SaaS 企业、农户调研机构）</div>
+
+    <div><strong>李培武院士的政协 / 人大身份</strong></div>
+    <div class="col-mid">院士身份已有（2019），但<strong>第十四届全国政协委员名单 / 全国人大代表名单</strong>中是否含李培武，目前公开信息未确认。如未在，是潜在的下一个政治节点</div>
+    <div class="who">中国农工党中央 / 九三学社中央（科技界院士的常用民主党派渠道）· 全国政协农业农村组 · 全国人大常委会农业农村委员会 — 通常通过"民主党派 + 院士所在地省级政协"两条线推动</div>
+
+    <div><strong>团队接班人 / 第二代 ARC 院士培养</strong></div>
+    <div class="col-mid">李培武 1961 年生，当前 64 岁。下一代继承人是张奇还是其他人 — 目前公开未明确。这是团队长期延续的关键节点</div>
+    <div class="who">张奇主任本人（如果他被定位为接班人）· 团队博士梯队 · 油料所人事处 · 中国工程院院士培养体系 — 切入点：协助团队建立"院士培养梯队"的资源</div>
+
+    <div><strong>个人荣誉：全国劳动模范 / 何梁何利奖</strong></div>
+    <div class="col-mid">五一劳动奖章（2024）+ 全国先进工作者（2025）<strong>已到手</strong>。下一阶可冲：<strong>全国劳动模范</strong>（5 年一评，下一届 2030）— 是"先进工作者"的升级版；<strong>何梁何利基金科学与技术奖</strong>（年度）— 院士级科学家通用通道，奖金 20 万港币</div>
+    <div class="who">全国总工会 · 人力资源社会保障部 · 农业农村部人事司提名（劳动模范）；何梁何利基金评选委员会（何梁何利奖）— 通常需要"重大成果持续发布 + 主流媒体连续报道 + 院士提名"</div>
+  </div>
+
+  <h2 class="h-sec">商业化口缺口 · 严重 · 仅 35% 饱和 ★最大机会</h2>
+
+  <div class="gap-table">
+    <div class="head">缺口</div>
+    <div class="head col-mid">具体内容</div>
+    <div class="head">谁能补 / 切入逻辑</div>
+
+    <div><strong>★ 资本平台</strong></div>
+    <div class="col-mid">目前只有新洋丰一个上市公司主体。阿可生物没有融资 / 没有 IPO 路径 / 没有产业基金。<strong>团队 IP 没有合规的资本变现工具</strong></div>
+    <div class="who">农业产业基金（国新建源、中信农业产业基金）· PE/VC（高瓴产业互联网基金、隆平 / 丰乐控股的投资部）· 上市公司战投部（除新洋丰外的其他可能整合方）· 投行（中信、中金的农业组）— 协助阿可生物完成 Pre-A / A 轮融资</div>
+
+    <div><strong>★ 国际化路径</strong></div>
+    <div class="col-mid">目前没有 PCT 海外专利布局；没有与 BASF / Bayer / Syngenta / Corteva 等的技术输出协议；没有对应的海外注册顾问 / 海外认证；没有面向国际市场的英文学术体系</div>
+    <div class="who">跨国公司中国 BD 部门 · 海外注册顾问公司 · PCT 海外专利律师 · CGIAR 系统（IITA / ICRISAT / EMBRAPA / INTA / ICAR）的对华合作官 · 国际肥料协会（IFA）· ISO 农业微生物标准技术委员会 — 协助团队完成首个国际合作项目 + 第一份 PCT 专利申请</div>
+
+    <div><strong>★ 衍生产品类拓展</strong></div>
+    <div class="col-mid">当前仅有"复合肥"一种产品形式（被新洋丰独家）。但<strong>菌剂直销、种衣剂、生物农药、生物刺激素、土壤改良剂</strong>这些衍生品类完全没做。这些都不在新洋丰的独家范围内</div>
+    <div class="who">先正达中国 BD 部门（种衣剂）· 拜耳作物科学中国 · 中农立华（农资经销）· 各种衣剂上市公司 · 成熟的生物刺激素企业 — 拿到第一份"非复合肥形态"的 ARC 菌种授权</div>
+
+    <div><strong>★ 农户数据闭环</strong></div>
+    <div class="col-mid">当前 ARC 的"应用数据"主要靠示范田和现场会。<strong>没有真正的农户大数据系统、没有 ROI 模型、没有逐户增收追踪、没有售后服务体系</strong>。这是国家科技奖申报时最致命的短板</div>
+    <div class="who">极飞科技 · 大疆农业 · 丰联农牧 · 农信互联 · 中化集团 MAP（智农），这些数字农业平台都有现成的农户数据网络 · 联合中国农大、华农等农经研究团队做大样本调查 — 建一个"ARC 全国应用数据中台"</div>
+
+    <div><strong>★ 应用场景拓展（玉米/水稻/油菜/蔬菜）</strong></div>
+    <div class="col-mid">目前 ARC 仅大豆 + 花生。理论上多种豆科 + 部分非豆科作物都有应用空间。<strong>这些拓展不与新洋丰复合肥独家冲突</strong></div>
+    <div class="who">玉米：登海 / 隆平高科 · 水稻：袁隆平农业 / 北大荒农垦 · 油菜：油料所同体系内的油菜组 · 蔬菜：寿光蔬菜产业控股 — 协助团队在新作物上开展示范田 + 申报新作物上的国家主推技术</div>
+
+    <div><strong>★ 海外采购订单（政府间 / NGO）</strong></div>
+    <div class="col-mid">非洲、南亚、东南亚的政府采购和 NGO 订单完全是另一套游戏规则。冈比亚 GGC 等政府采购、世界银行 / FAO 等多边采购，目前都没有进入 ARC 的销售管道</div>
+    <div class="who">中国进出口银行国际合作业务部 · 中非发展基金 · 国家国际发展合作署 · 联合国粮农组织（FAO）驻华代表处 · 世界银行驻华农业组 — 把 ARC 嵌入"中国对外援助 + 一带一路农业合作"叙事</div>
+
+    <div><strong>★ 真正的菌种保藏 / GMP 级生产</strong></div>
+    <div class="col-mid">菌种长期稳定性 / 不同产地菌种再激活 / GMP 级洁净生产是高级农业菌剂的隐形门槛。当前阿可生物 + 王女士菌剂厂规模是否能支撑国际化？未必</div>
+    <div class="who">中国微生物菌种保藏管理委员会 · 中国食品发酵工业研究院 · 国家微生物科学数据中心 · 各大医药 CMO — 协助建立团队系的"菌种全球保藏 + GMP 生产"基础设施</div>
+  </div>
+
+  <h2 class="h-sec">三口缺口的优先级排序</h2>
+  <div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>缺口</th><th>院士团队的实际紧迫度</th><th>外部能补的难度</th><th>新搅局者的机会大小</th></tr></thead>
+    <tbody>
+      <tr><td>国家科技进步奖一等</td><td>高（5 年内必冲）</td><td>高（需要顶级院士提名）</td><td>★★ 一般</td></tr>
+      <tr><td>2026 中央一号文件指名</td><td>中</td><td>极高</td><td>★ 弱</td></tr>
+      <tr><td>国务院级专题</td><td>中</td><td>极高</td><td>★ 弱</td></tr>
+      <tr><td><strong>资本平台 / Pre-A 融资</strong></td><td>高（2026 内必启动）</td><td>中</td><td><strong style="color:var(--amber)">★★★★★ 最大</strong></td></tr>
+      <tr><td><strong>国际化 / PCT 专利布局</strong></td><td>高（中关村发布后 1 年内）</td><td>中</td><td><strong style="color:var(--amber)">★★★★★ 最大</strong></td></tr>
+      <tr><td><strong>衍生品类拓展</strong></td><td>中高</td><td>中</td><td><strong style="color:var(--amber)">★★★★ 大</strong></td></tr>
+      <tr><td><strong>农户数据闭环</strong></td><td>中（决定丰收奖申报质量）</td><td>低-中</td><td><strong style="color:var(--amber)">★★★★ 大</strong></td></tr>
+      <tr><td>应用场景拓展（玉米 / 水稻）</td><td>低</td><td>低</td><td>★★★ 中等</td></tr>
+      <tr><td>海外采购订单</td><td>低</td><td>中</td><td>★★★ 中等</td></tr>
+      <tr><td>GMP 菌种保藏 / 生产</td><td>中（国际化前提）</td><td>中高</td><td>★★ 一般</td></tr>
+      <tr><td>政协委员 / 个人荣誉</td><td>中</td><td>极高</td><td>★ 弱</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- =============== POLITICAL ECOSYSTEM (NEW SECTION VI) =============== -->
+<section id="political">
+  <div class="chapter-no">VI ／ 政商结合 · 政治任务地图</div>
+  <h1 class="h-page">技术不找市场，政治需求找抓手</h1>
+  <p class="lede">
+    林占熺的菌草本身在 1986 年就成熟了，但真正放大成全球技术——106 国推广、习近平外交名片——是 1997 年福建对口帮扶宁夏给了它"政治任务载体"的机会。<strong>技术需要政治需求作为分配器和正当性</strong>。这是 ARC 商业化的最深底层逻辑，但前面所有章节都没讲过。这一章补上。
+  </p>
+
+  <div class="topbar">
+    <div class="icon">▸</div>
+    <div>
+      <strong>核心方法论：</strong>不要找"最好的技术政策"，要找"现任领导班子正在被中央考核的硬指标"。把 ARC 设计成那些硬指标的"具体抓手"，技术自然就被分配了资源、获得了正当性。
+    </div>
+  </div>
+
+  <h2 class="h-sec">林占熺-菌草-闽宁模式 · 完整复盘</h2>
+
+  <div class="timeline">
+    <div class="item">
+      <div class="yr">1983-1986</div>
+      <div>
+        <div class="ttl">林占熺在福建农林大学发明菌草「以草代木」</div>
+        <div class="desc">触发：长汀县水土流失现场，蘑菇产业砍伐森林"菌林矛盾"。1000+ 天野草替代研究。1986.10 技术成熟。<br><strong>关键</strong>：发现真实社会问题驱动技术，不是科学家臆想。</div>
+      </div>
+    </div>
+    <div class="item warn">
+      <div class="yr">1996-1997</div>
+      <div>
+        <div class="ttl">★ 政治任务出现：福建对口帮扶宁夏</div>
+        <div class="desc">1996.10 中央确定 19 个省份对口帮扶。福建 → 宁夏。习近平任福建省委副书记，被任命为<strong>福建对口帮扶宁夏协调小组组长</strong>。1997.04 第二次闽宁联席会议<u>菌草被正式列为重点项目</u>，习近平亲自签字。<br><strong>关键</strong>：菌草恰好解决"宁夏无林木 + 缺产业"两重困境——省情高度匹配。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="yr">1997 半年</div>
+      <div>
+        <div class="ttl">彭阳县试点 27 户示范，年收入 2000+ 元</div>
+        <div class="desc">是种 27 亩小麦的 50 倍。闽宁帮扶的最初成功证明。这个具体收入数字是后续放大的全部基础。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="yr">2001-2009</div>
+      <div>
+        <div class="ttl">升级为「科技援外」：外交部 / 商务部接管</div>
+        <div class="desc">巴布亚新几内亚（200 天驻地、当地部长给女儿取名"菌草"）→ 卢旺达 → 斐济。2009 年习近平任副主席访问斐济时主动推荐菌草。技术从"扶贫工具"升级为"中国外交名片"。</div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="yr">至今</div>
+      <div>
+        <div class="ttl">推广至 106 国 / 12000 人技术骨干 / 18 种语言</div>
+        <div class="desc">福建-宁夏的省际合作起点 → "一带一路"农业合作核心 IP。林占熺本人成为二十大代表。</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="h-sec">三条核心启示给 ARC</h2>
+  <div class="grid grid-3">
+    <div class="card amber">
+      <div class="label">启示 01 · 时机</div>
+      <h3 class="h-sub">技术 ≠ 推广 · 需要政治任务作为分配器</h3>
+      <p class="subtle">菌草 1986 年成熟、1997 年才被分配到资源。中间 11 年没有突破。<strong>不要等"市场自然成熟"</strong>——要主动找当前的中央硬指标。ARC 现在的状态接近 1990 年代菌草：技术成熟，但没有真正大规模分配机制。</p>
+    </div>
+    <div class="card amber">
+      <div class="label">启示 02 · 选择</div>
+      <h3 class="h-sub">省情匹配比技术先进性更重要</h3>
+      <p class="subtle">宁夏选菌草不是因为技术最好，而是因为<u>它解决宁夏特有的"无林木 + 缺产业"困境</u>。ARC 应该评估：哪些省的考核压力（黑龙江粮食+黑土、新疆盐碱地、河南粮食安全+焦裕禄精神）能被 ARC 直接缓解？</p>
+    </div>
+    <div class="card amber">
+      <div class="label">启示 03 · 升级</div>
+      <h3 class="h-sub">从地方 → 国家 → 国际，必经"外交"路径</h3>
+      <p class="subtle">菌草的真正放大不是 1997 年，而是 2001 年进入科技援外。<strong>政策载体的等级</strong>决定了技术的最终规模。ARC 的远期目标应该是进入"中国农业科技援外项目"，而不是停留在某个省的补贴目录。</p>
+    </div>
+  </div>
+
+  <h2 class="h-sec">当前农业领域的"政治任务包"清单</h2>
+  <p class="subtle muted">每个政策包 = 一个对口班子 + 一个考核硬指标 + 一个 ARC 嵌入位置。</p>
+
+  <div class="table-wrap">
+  <table class="t">
+    <thead><tr><th style="width:170px">政策任务</th><th>主管 / 文件</th><th>核心硬指标</th><th>关键省份</th><th>ARC 嵌入位置</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>大豆和油料产能提升工程</strong> <span class="pill amber">最高优先级</span></td>
+        <td>农业农村部 + 发改委<br>2024/2025 一号文件</td>
+        <td>大豆面积稳定 1.5 亿亩<br>油菜花生扩种潜力挖掘</td>
+        <td>黑龙江、内蒙古、吉林、河南、山东</td>
+        <td>「减肥 + 增产 + 降毒素」三合一<br>申请进入"提产能农技行动"专家库</td>
+      </tr>
+      <tr>
+        <td><strong>黑土地保护工程</strong> <span class="pill amber">最高</span></td>
+        <td>农业农村部 + 财政部 + 7 部门<br>2021-2025 第一阶段</td>
+        <td>黑土耕地质量 +10%<br>有机肥深翻 1 亿亩<br>保护性耕作 5 亿亩次</td>
+        <td>黑龙江、吉林、辽宁、内蒙古</td>
+        <td>「微生物激活黑土 + 减化肥」叙事<br>申报"十四五"国家重点 R&amp;D</td>
+      </tr>
+      <tr>
+        <td><strong>盐碱地综合利用</strong></td>
+        <td>习近平 2023 调研河北沧州后强调<br>多部门</td>
+        <td>盐碱地资源开发利用<br>新质生产力</td>
+        <td>新疆、内蒙古、宁夏、河北、山东</td>
+        <td>开发耐盐根瘤菌种<br>嵌入新疆棉豆轮作</td>
+      </tr>
+      <tr>
+        <td><strong>乡村全面振兴 · 重点帮扶县</strong></td>
+        <td>中共中央 + 国务院<br>2025.01 规划 2024-2027</td>
+        <td>160 个国家重点帮扶县<br>每县 600 亩建设用地指标 + 财政倾斜</td>
+        <td>云贵川陕甘宁青藏新桂 10 省 160 县</td>
+        <td>选 30-50 县做 ARC 示范<br>用中央衔接资金做农户补贴</td>
+      </tr>
+      <tr>
+        <td><strong>对口帮扶 / 东西部协作</strong> <span class="pill green">★ 林占熺路径</span></td>
+        <td>国务院东西部协作领导小组<br>2021-2025 安排</td>
+        <td>对口任务必须有量化成果</td>
+        <td>福建-宁夏（菌草已先例）<br>山东-重庆 / 江苏-陕西 / 浙江-四川</td>
+        <td>福建已有泉州 ARC 示范——<br>可复用闽宁通道把 ARC 推到宁夏固原</td>
+      </tr>
+      <tr>
+        <td><strong>科技援外 / 一带一路农业</strong></td>
+        <td>外交部 + 商务部 + 国际发展合作署</td>
+        <td>"一带一路"农业合作国数 + 项目数</td>
+        <td>非洲（尼日利亚等花生大国）<br>东南亚 / 中亚</td>
+        <td>菌草 → ARC：中国微生物菌剂的下一张外交名片</td>
+      </tr>
+      <tr>
+        <td><strong>新质生产力（农业）</strong> <span class="pill blue">2024 新词</span></td>
+        <td>中共中央 2024 新概念</td>
+        <td>生物育种 + 智慧农业 + 生物制剂</td>
+        <td>所有省都在比拼"我有什么新质生产力"</td>
+        <td>ARC 自己即是"农业新质生产力"<br>各省争抢可作为典型案例</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="h-sec">8 个重点省 · 现任领导班子与考核压力</h2>
+  <p class="subtle muted">2024-2026 最新人事。重点是"该班子最在意中央考核的什么硬指标"——这决定了 ARC 能否成为他们的"抓手"。</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="label">黑龙江 ★ 头号大豆基地</div>
+      <h3 class="h-sub">省委书记 许勤（2023.12）· 省长 胡玉亭</h3>
+      <p class="subtle">考核：粮食产量占全国 1/10、大豆面积、黑土地质量。<strong>三项考核与 ARC 完全重叠。</strong>许勤履历偏经济，对"科技+农业"的政绩组合敏感。已有 6 元/亩补贴 75 县，最易升级为"省级常规补贴目录"。</p>
+    </div>
+    <div class="card">
+      <div class="label">河南 ★ 焦裕禄精神发源地</div>
+      <h3 class="h-sub">省委书记 刘宁（2024.12）· 省长 王凯</h3>
+      <p class="subtle">刘宁<u>有国务院扶贫办副主任 + 广西党委书记背景</u>，对"困难地区技术推广"极敏感。河南是粮食 + 油料双大省，且兰考是焦裕禄精神发源地，已是 ARC 万亩示范点——<strong>政治符号 + 真实数据双优</strong>。最易做"焦裕禄+ARC"叙事。</p>
+    </div>
+    <div class="card">
+      <div class="label">福建 ★ 菌草历史现场</div>
+      <h3 class="h-sub">省委书记 周祖翼（2022.11）· 省长 赵龙</h3>
+      <p class="subtle">福建-宁夏对口帮扶持续 29 年，菌草是闽宁产业园核心。<strong>已有泉州 ARC 示范基础</strong>。如果 ARC 走"复制菌草路径"，福建是必经的起点：通过福建农业部门 → 闽宁协作办 → 宁夏固原。这是历史最近的可复用通道。</p>
+    </div>
+    <div class="card">
+      <div class="label">宁夏 ★ 闽宁帮扶承接方</div>
+      <h3 class="h-sub">党委书记 李邑飞（2024.06）· 主席 张雨浦</h3>
+      <p class="subtle">李邑飞有<u>新疆治理 + 对口帮扶</u>双重经验。宁夏的核心政绩是"巩固脱贫 + 闽宁示范"。菌草已是宁夏招牌——<strong>ARC 完全可以做"第二个菌草"</strong>。宁夏会主动配合，因为这关系到他们对中央的"闽宁模式持续创新"汇报。</p>
+    </div>
+    <div class="card">
+      <div class="label">内蒙古 · 草业 + 盐碱地</div>
+      <h3 class="h-sub">党委书记 王伟中（2025.09）· 主席 王莉霞</h3>
+      <p class="subtle">王伟中是<u>原深圳市委书记</u>，对"科技驱动 + 创新经济"理解深。考核：草业、盐碱地（河套地区）、北京-内蒙古对口帮扶。已有兴安盟 ARC 项目——升级到自治区层面文件需要这位新书记的政绩偏好支持。</p>
+    </div>
+    <div class="card">
+      <div class="label">山东 · 油料 + 数字农业</div>
+      <h3 class="h-sub">省委书记 林武（2022.12）· 省长 周乃翔</h3>
+      <p class="subtle">山东是<u>全国第二大油料省</u>。周乃翔是杭州背景，对"数字农业、品牌化"有更高期待。2025 文件已写入"ARC 3-4 公斤/亩"，但需要再向"省级补贴 / 数字平台融合"升级。可走"山东 → 数字平台 → 全国"路径。</p>
+    </div>
+    <div class="card">
+      <div class="label">吉林 · 浙江来的玉米大省</div>
+      <h3 class="h-sub">省委书记 黄强（2024.06，浙江背景）</h3>
+      <p class="subtle">浙江来的书记 + 全国第二大粮食省。黄强对<u>"创新转化 + 新质生产力"</u>会更敏感。当前 540 元/亩大豆补贴是全国最高。ARC 进入吉林的窗口在 2026—因为黄强需要"新政绩抓手"。</p>
+    </div>
+    <div class="card">
+      <div class="label">新疆 · 习近平亲抓 + 盐碱地</div>
+      <h3 class="h-sub">党委书记 陈小江（2025.07）</h3>
+      <p class="subtle">陈小江有<u>国家乡村振兴局书记 + 国务院扶贫办背景</u>。新疆考核：稳定 + 粮食安全 + 棉花改粮。ARC 当前配方对碱性土壤不适用——<strong>但如果团队能开发"耐盐 ARC"，新疆会获得习近平直接关注</strong>。这是技术上需要先突破的窗口。</p>
+    </div>
+  </div>
+
+  <h2 class="h-sec">三条最值得攻的政治任务通道</h2>
+  <div class="grid grid-3">
+    <div class="card amber">
+      <div class="label">通道 A · 已有最强基础</div>
+      <h3 class="h-sub">黑龙江大豆 + 黑土地工程</h3>
+      <p class="subtle">许勤书记 + 韩俊部长 + 已有 6 元/亩补贴 75 县。<strong>下一步</strong>：把"暂定补贴"升级为"省级常规补贴目录"；同步申报"十四五"国家重点 R&amp;D"黑土微生物激活"专项（2000-5000 万经费）。</p>
+    </div>
+    <div class="card amber">
+      <div class="label">通道 B · 政治符号最强</div>
+      <h3 class="h-sub">河南兰考 · 焦裕禄叙事</h3>
+      <p class="subtle">兰考已是 ARC 万亩示范地（327→487 kg/亩）+ 焦裕禄精神发源地 + 刘宁有扶贫背景。<strong>下一步</strong>：打造"焦裕禄精神 + ARC 助力粮食安全"宣传叙事，请央视/新华社做专题；推动河南省主推目录"指名 ARC"。</p>
+    </div>
+    <div class="card amber">
+      <div class="label">通道 C · 历史路径最清晰</div>
+      <h3 class="h-sub">闽宁通道 · 复制菌草路径</h3>
+      <p class="subtle">福建已有泉州示范 + 闽宁帮扶现成通道 + 宁夏新书记李邑飞配合度高。<strong>下一步</strong>：通过闽宁协作办公室将 ARC 列入 2025-2027 重点项目；2026 年在宁夏固原建 500 亩示范田；2027 年向商务部建议升级为"科技援外"。</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============== NICHE (REWRITTEN VII) =============== -->
+<section id="niche">
+  <div class="chapter-no">VII ／ 搅局者生态位 · 历史先例</div>
+  <h1 class="h-page">5 种真实做成过的模式</h1>
+  <p class="lede">
+    上一版我写了"作物拓展员"、"营销申报顾问"等岗位——这些都是<strong>凭空臆想</strong>，历史上没有任何人靠这些做成过 ARC 这种规模的成果转化。这一节<u>抛弃所有杜撰</u>，只列在中国农业历史上真实做成过的 5 种模式，每种都有具体人物、路径、节点，对应到 ARC 的可借鉴方式。
+  </p>
+
+  <h2 class="h-sec">5 种真实做成过的成果转化模式</h2>
+
+  <details open>
+    <summary>① 林占熺-菌草模式 · 院士背书 + 政策载体 + 国家级升级</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>历史人物</dt><dd>林占熺（福建农林大学教授）</dd>
+        <dt>关键节点</dt><dd>1986 技术成熟 → 1997 闽宁帮扶项目 → 2001 巴新援助 → 2009 习近平副主席亲自推荐 → 至今 106 国推广</dd>
+        <dt>起家路径</dt><dd>基础科研 → 地方政策驱动 → 国家级对口帮扶 → 科技援外升级</dd>
+        <dt>成功要素</dt><dd>① 符合地方政策刚需（宁夏无林木+缺产业）；② 有明确经济指标（27 户年收入 2000+ 元）；③ 国家级政治背书；④ 升级为国际合作</dd>
+        <dt>规模</dt><dd>全球 106 国 / 120 万公顷 / 120 万农民直接受益 / 12000 技术骨干</dd>
+        <dt>对 ARC 借鉴</dt><dd><strong>这是 ARC 商业化的最佳模板</strong>。可走：福建（已有泉州 ARC 示范）→ 闽宁协作办 → 宁夏固原 → 商务部"科技援外"。预期 5-10 年内推广到 5-10 个一带一路国家。</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details open>
+    <summary>② 袁隆平-隆平高科模式 · 院士品牌 + 国企改制上市</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>历史人物</dt><dd>袁隆平（杂交水稻之父）+ 湖南农科院</dd>
+        <dt>关键节点</dt><dd>1986-1990 三期杂交稻育成 → 1999.06 隆平高科注册成立<br><strong>袁隆平授权使用姓名权，获 580 万元一次性使用费</strong> → 2000.12 深交所上市 → 2004 新大新接手大股东 → 2016 中信集团成为实际控制人</dd>
+        <dt>起家路径</dt><dd>院士品牌 → 国企改制上市 → 多企业整合 → 大股东易主 → 国家队主权基金接手</dd>
+        <dt>成功要素</dt><dd>① 院士品牌效应；② 国家级种业规划支持；③ 与全球种业巨头（Pioneer、Syngenta）合作；④ 国际竞争力的种子产品</dd>
+        <dt>对 ARC 借鉴</dt><dd>路径 ≈ 阿可生物。可仿 1999 模式：李培武授权姓名权 + 油料所做股东 + 引入产业基金 → 阿可生物估值 5-10 亿做 Pre-A → 5 年内冲科创板。<strong>关键认知</strong>：袁隆平自己最后并不控股，但品牌价值贯穿全程。</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details open>
+    <summary>③ 邵根伙-大北农模式 · 博士创业 + 专业聚焦 + 资本运作</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>历史人物</dt><dd>邵根伙（中国农大猪营养学博士，2026.02 病逝享年 60）</dd>
+        <dt>关键节点</dt><dd>1991 农大博士毕业，任教北京农学院 → 1993.12 拿出 2 万元自筹创办大北农，主做乳猪配方饲料 → 2002 成为中国饲料行业龙头 → 2010 深交所上市 → 2020 拓展到生物肥料、生物育种</dd>
+        <dt>起家路径</dt><dd>博士创业 → 细分领域绝对优势（乳猪料）→ 上下游拓展（饲料→养殖→食品）→ 与温氏/牧原战略合作 → 上市</dd>
+        <dt>成功要素</dt><dd>① 创始人博士+农大背景；② 死磕一个细分（乳猪料 → 整猪料）；③ 与下游龙头深度绑定；④ 资本市场放大</dd>
+        <dt>对 ARC 借鉴</dt><dd>找一位有博士+农业背景的项目负责人作为"创始人形象"。聚焦"大豆-花生根瘤菌"或"黑土微生物激活"<u>单一细分</u>。与中粮 / 益海嘉里 3+ 家粮食龙头签战略合作。Pre-A 1 亿内 → 3 年内进入农技推广中心推荐名单。</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details>
+    <summary>④ 金正大模式 · 高校 20 年深度合作 + 国家 R&amp;D + 自主 IP</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>历史人物</dt><dd>金正大集团 + 山东农业大学张民教授</dd>
+        <dt>关键节点</dt><dd>2002 集团成立 → 2004 与山农大张民合作引入"包膜控释肥"，开始 20 年合作 → 2010 中国 A 股首个缓控释肥上市公司 → 2020 第 3 次获国家科技奖 → 2025 全球缓控释肥领导者，与 40+ 家高校院所合作</dd>
+        <dt>起家路径</dt><dd>肥料公司 + 高校长期合作 → 缓控释肥单点突破 → 国家科技奖背书 → 国际推广</dd>
+        <dt>成功要素</dt><dd>① 专注单一细分（缓控释肥）做成全球引领者；② 与高校 20 年深度合作（共建 3 个国家级研究平台）；③ 110+ 项发明专利；④ 国家科技进步奖 3 次背书</dd>
+        <dt>对 ARC 借鉴</dt><dd>与中国农大 / 中国农科院建立"微生物肥料联合创新中心"。申报 2025-2026"十四五"国家重点 R&amp;D 项目，争取 2000-5000 万经费。3 年内积累 20+ 发明专利。10 年内冲国家科技进步奖。<strong>金正大与山农大合作模式可直接复制</strong>。</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details>
+    <summary>⑤ 联想佳沃 / 中化 MAP 模式 · 财团资本 + 全产业链 + 平台化</summary>
+    <div class="body">
+      <dl class="kv">
+        <dt>历史人物</dt><dd>联想控股（柳传志）→ 佳沃集团 + 中化集团 → MAP 现代农业服务平台</dd>
+        <dt>关键节点</dt><dd>佳沃：2010 联想控股农业事业部 → 2012 佳沃集团 → 2013 斥资 10 亿元品牌发布 → 2013-2015 智利收购 5 家农场 → 2016 收购万福生科完成 A 股上市并购<br>MAP：2015 中化集团推出 → 2017 覆盖 3500 万亩 → 2024 与阿里合作数字农业</dd>
+        <dt>起家路径</dt><dd>大型企业集团资本投入 → 全产业链整合（育种-种植-加工-销售）→ 海外布局 → 消费品/服务品牌塑造 → 上市并购</dd>
+        <dt>成功要素</dt><dd>① 大型集团 10 亿+ 资本投入；② 全产业链整合；③ 平台 + 模块的生态（不是单产品而是整体方案）；④ 与互联网巨头合作</dd>
+        <dt>对 ARC 借鉴</dt><dd>主动接触<u>中信农业产业基金 / 国新建源</u>等政府性基金报送融资计划。争取与<u>中化 MAP</u>合作把 ARC 嵌入"配肥推荐"环节——这能让 ARC 获得 3500 万亩级隐性渠道。比独立推广快 10 倍。</dd>
+      </dl>
+    </div>
+  </details>
+
+  <h2 class="h-sec">5 种模式对比矩阵</h2>
+  <div class="table-wrap">
+  <table class="t">
+    <thead><tr><th style="width:170px">模式</th><th>起家年</th><th>核心要素</th><th>预期周期</th><th>预期规模</th><th>ARC 适用性</th></tr></thead>
+    <tbody>
+      <tr><td><strong>① 林占熺-菌草</strong></td><td>1986→1997 起爆</td><td>院士+对口帮扶+科技援外</td><td>5-10 年到国际化</td><td>106 国 / 120 万公顷</td><td><span class="pill amber">★★★★★</span> 最适配</td></tr>
+      <tr><td><strong>② 袁隆平-隆平高科</strong></td><td>1999</td><td>姓名权授权+国企改制+上市</td><td>3-5 年到 IPO</td><td>上市公司年百亿</td><td><span class="pill amber">★★★★</span> 阿可生物路径</td></tr>
+      <tr><td><strong>③ 邵根伙-大北农</strong></td><td>1993</td><td>博士创业+细分聚焦+龙头合作</td><td>5-10 年到上市</td><td>年营收百亿</td><td><span class="pill amber">★★★</span> 中等</td></tr>
+      <tr><td><strong>④ 金正大-山农大</strong></td><td>2002 + 2004 高校合作</td><td>20 年高校合作+国家奖</td><td>10-15 年长周期</td><td>全球缓控释肥引领者</td><td><span class="pill amber">★★★★</span> 学术路径</td></tr>
+      <tr><td><strong>⑤ 联想佳沃 / 中化 MAP</strong></td><td>2010 / 2015</td><td>财团 10 亿+ + 全产业链 + 平台化</td><td>5-10 年</td><td>3500 万亩 / 年百亿</td><td><span class="pill amber">★★★★</span> 平台路径</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 class="h-sec">最值得复制的：林占熺路径 · 详细推演</h2>
+  <div class="callout">
+    <p>所有 5 种模式中，林占熺路径与 ARC 当前状态最匹配——都是<strong>院士团队 + 已成熟技术 + 缺政治任务载体</strong>。下面是把 ARC 套进林占熺模板的具体推演：</p>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="label">2025-2026 短期</div>
+      <h3 class="h-sub">争取闽宁通道</h3>
+      <p class="subtle">福建已有泉州 ARC 示范基础。<strong>动作</strong>：</p>
+      <ul class="subtle" style="margin:0">
+        <li>联系福建省农业农村厅 + 闽宁协作办公室</li>
+        <li>把 ARC 列入 2025-2027 闽宁重点项目清单</li>
+        <li>2026 年在宁夏固原市建 500 亩示范田（中央衔接资金可补贴）</li>
+        <li>同步争取列入"大豆油料提产能农技行动"专家库</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="label">2026-2028 中期</div>
+      <h3 class="h-sub">国家级背书 + R&amp;D 项目</h3>
+      <p class="subtle">基于宁夏成功案例向上升级。<strong>动作</strong>：</p>
+      <ul class="subtle" style="margin:0">
+        <li>申报"十四五"国家重点 R&amp;D 微生物肥料专项（2000-5000 万）</li>
+        <li>与中国农大联合建"微生物菌肥创新中心"</li>
+        <li>在 160 个乡村振兴重点帮扶县中选 30-50 个推广</li>
+        <li>每县农户补贴 20-30 元 ARC 产品（中央财政衔接资金）</li>
+      </ul>
+    </div>
+    <div class="card amber">
+      <div class="label">2028-2030 长期 · 国际化</div>
+      <h3 class="h-sub">复制菌草外交模板</h3>
+      <p class="subtle">向商务部 / 国合署 / 外交部报送"科技援外项目建议"。<strong>动作</strong>：</p>
+      <ul class="subtle" style="margin:0">
+        <li>选 3-5 个一带一路国家（非洲花生大国优先）</li>
+        <li>由商务部援外司牵头，中国农科院油料所执行</li>
+        <li>建立 100 万亩级国际示范基地</li>
+        <li>5 年内成为中国农业科技援外名片之一</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 class="h-sec">所有路径的共同前提：先打通沈俊</h2>
+  <div class="callout">
+    <p>无论哪条历史路径，第一步都不是融资、签合同、报项目，而是：</p>
+    <ol>
+      <li><strong>触达沈俊</strong>（而不是李培武）。他是阿可生物法人，是项目商业化第一接口。直接找李院士基本会被礼貌地引回沈俊。</li>
+      <li><strong>给阿可生物提供具体价值</strong>。第一次见面带的不是合同，是"我能帮阿可生物做什么"——这能直接决定外部方是否被认作"自己人"。</li>
+      <li><strong>同步建立与张奇主任的技术对话</strong>。张奇是国家技术发明奖二等第二完成人，所有技术合作必须有他签字。</li>
+    </ol>
+    <blockquote>
+      <strong>判断</strong>：成功的搅局者，最终是"被院士团队当成自己人"。第一年的目标不是签合同，而是建立信任和不可替代价值。
+    </blockquote>
+  </div>
+</section>
+
+<!-- =============== DECISION =============== -->
+<section id="decision">
+  <div class="chapter-no">VII ／ 推演</div>
+  <h1 class="h-page">三种结局：院士团队的下一步</h1>
+  <p class="lede">基于第三 + 第四线的张力分析，2026 H1 的"分蛋糕窗口"大概率会以三种方式之一收场。每种结局对应外部新搅局者的不同进入点。</p>
+
+  <div class="card">
+    <svg viewBox="0 0 900 540" style="width:100%;height:auto;display:block;font-family:inherit">
+      <rect x="370" y="20" width="160" height="50" rx="8" fill="#f7f5ef" stroke="#f59e0b" stroke-width="2"/>
+      <text x="450" y="42" text-anchor="middle" fill="#f59e0b" font-weight="700" font-size="13">2026 春</text>
+      <text x="450" y="60" text-anchor="middle" fill="#1a1612" font-size="11">"分蛋糕窗口"开启</text>
+
+      <path d="M 450,70 Q 320,100 180,130" stroke="#34d399" stroke-width="2.5" fill="none"/>
+      <path d="M 450,70 L 450,130" stroke="#f87171" stroke-width="2.5" fill="none"/>
+      <path d="M 450,70 Q 580,100 720,130" stroke="#60a5fa" stroke-width="2.5" fill="none"/>
+
+      <!-- A -->
+      <rect x="60" y="130" width="240" height="50" rx="8" fill="#ecfdf5" stroke="#34d399"/>
+      <text x="180" y="152" text-anchor="middle" fill="#34d399" font-weight="700" font-size="12">A · 团队系自循环加固</text>
+      <text x="180" y="170" text-anchor="middle" fill="#047857" font-size="10">阿可生物融资 + 边界划清</text>
+      <text x="180" y="200" text-anchor="middle" fill="#908d84" font-size="10">概率约 35%</text>
+
+      <rect x="40" y="220" width="280" height="120" rx="8" fill="#ffffff" stroke="#a7f3d0"/>
+      <text x="180" y="242" text-anchor="middle" fill="#34d399" font-weight="600" font-size="11">M9-M12 后果</text>
+      <text x="60" y="265" fill="#595650" font-size="11">→ 阿可生物完成 Pre-A 融资</text>
+      <text x="60" y="285" fill="#595650" font-size="11">→ 复合肥归新洋丰，菌剂归团队</text>
+      <text x="60" y="305" fill="#595650" font-size="11">→ 国际化集中到阿可生物 / 团队</text>
+      <text x="60" y="325" fill="#595650" font-size="11">→ 王女士菌剂厂被纳入或独立</text>
+
+      <rect x="40" y="360" width="280" height="80" rx="8" fill="#ecfdf5" stroke="#34d399"/>
+      <text x="180" y="382" text-anchor="middle" fill="#34d399" font-weight="600" font-size="11">外部搅局者最佳进入点</text>
+      <text x="60" y="402" fill="#047857" font-size="11">• 资本平台路径（投阿可生物）</text>
+      <text x="60" y="420" fill="#047857" font-size="11">• 国际化路径（与阿可签授权）</text>
+      <text x="60" y="438" fill="#047857" font-size="11">• 数据闭环（与团队联合中台）</text>
+
+      <!-- B -->
+      <rect x="330" y="130" width="240" height="50" rx="8" fill="#fff1f2" stroke="#f87171"/>
+      <text x="450" y="152" text-anchor="middle" fill="#f87171" font-weight="700" font-size="12">B · 新洋丰扩独家 / 合资</text>
+      <text x="450" y="170" text-anchor="middle" fill="#be123c" font-size="10">复合肥独家扩到全口径</text>
+      <text x="450" y="200" text-anchor="middle" fill="#908d84" font-size="10">概率约 40%</text>
+
+      <rect x="310" y="220" width="280" height="120" rx="8" fill="#ffffff" stroke="#fecdd3"/>
+      <text x="450" y="242" text-anchor="middle" fill="#f87171" font-weight="600" font-size="11">M9-M12 后果</text>
+      <text x="330" y="265" fill="#595650" font-size="11">→ 新洋丰技术入股 / 合资公司</text>
+      <text x="330" y="285" fill="#595650" font-size="11">→ 衍生品 / 国际化授权权部分让渡</text>
+      <text x="330" y="305" fill="#595650" font-size="11">→ 阿可生物角色被压缩</text>
+      <text x="330" y="325" fill="#595650" font-size="11">→ 王女士菌剂厂可能被收编</text>
+
+      <rect x="310" y="360" width="280" height="80" rx="8" fill="#fff1f2" stroke="#f87171"/>
+      <text x="450" y="382" text-anchor="middle" fill="#f87171" font-weight="600" font-size="11">外部搅局者最佳进入点</text>
+      <text x="330" y="402" fill="#be123c" font-size="11">• 衍生品路径（仍可拿菌种授权）</text>
+      <text x="330" y="420" fill="#be123c" font-size="11">• 闽宁通道（菌草模式复制）</text>
+      <text x="330" y="438" fill="#be123c" font-size="11">• 政绩营销（团队仍欢迎）</text>
+
+      <!-- C -->
+      <rect x="600" y="130" width="240" height="50" rx="8" fill="#eff6ff" stroke="#60a5fa"/>
+      <text x="720" y="152" text-anchor="middle" fill="#60a5fa" font-weight="700" font-size="12">C · 国际大厂介入</text>
+      <text x="720" y="170" text-anchor="middle" fill="#4338ca" font-size="10">BASF / Bayer 全球谈判</text>
+      <text x="720" y="200" text-anchor="middle" fill="#908d84" font-size="10">概率约 25%</text>
+
+      <rect x="580" y="220" width="280" height="120" rx="8" fill="#ffffff" stroke="#c7d2fe"/>
+      <text x="720" y="242" text-anchor="middle" fill="#60a5fa" font-weight="600" font-size="11">M9-M18 后果</text>
+      <text x="600" y="265" fill="#595650" font-size="11">→ 国际大厂出价千万-亿美元级</text>
+      <text x="600" y="285" fill="#595650" font-size="11">→ 团队权衡国际化 vs 中国主权</text>
+      <text x="600" y="305" fill="#595650" font-size="11">→ 油料所 + 中国农科院介入决策</text>
+      <text x="600" y="325" fill="#595650" font-size="11">→ 中关村论坛叙事被重新包装</text>
+
+      <rect x="580" y="360" width="280" height="80" rx="8" fill="rgba(96,165,250,0.06)" stroke="#60a5fa"/>
+      <text x="720" y="382" text-anchor="middle" fill="#60a5fa" font-weight="600" font-size="11">外部搅局者最佳进入点</text>
+      <text x="600" y="402" fill="#4338ca" font-size="11">• 中外联合体（中方代表方）</text>
+      <text x="600" y="420" fill="#4338ca" font-size="11">• 区域代理 / 国别独家</text>
+      <text x="600" y="438" fill="#4338ca" font-size="11">• "中国 ARC 国际平台"卡位</text>
+    </svg>
+  </div>
+
+  <p class="subtle muted" style="text-align:center;margin-top:18px">
+  无论 A / B / C 哪种结局，<strong style="color:var(--amber)">商业化口的四大缺口（资本 / 国际化 / 衍生品 / 数据）</strong>都不会被新洋丰单方面填满。这是新搅局者无论何时介入都能找到位置的结构性原因。
+  </p>
+</section>
+
+<!-- =============== TECH =============== -->
+<section id="tech">
+  <div class="chapter-no">附录 A ／ 技术速读</div>
+  <h1 class="h-page">ARC 技术速读</h1>
+  <p class="lede">从《大豆花生提质固氮耦合绿色增产关键技术》PPT 与 Technology Profile 提取的核心信息。</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3 class="h-sub">技术原理</h3>
+      <p class="subtle">ARC = "提质固氮耦合"微生物菌剂。通过多菌种耦合 + 与传统肥料的协同，<strong>同时</strong>解决三个问题：①根际固氮（替代部分氮肥）；②黄曲霉毒素污染防控；③促生长。"耦合"是关键词 — 不是简单的菌种叠加，而是与传统化肥、植物生理多维度交互。</p>
+    </div>
+    <div class="card">
+      <h3 class="h-sub">核心数据</h3>
+      <ul class="subtle" style="margin:0">
+        <li><strong>减肥 20% + 增产 10%+</strong>（高/中/低产田连续 3 年）</li>
+        <li>花生平均增产 19.67%，最高 +51.23%（湖北天门）</li>
+        <li>大豆增产 12-34.7%；根瘤数 +40%</li>
+        <li>黄曲霉毒素污染下降 ≥80%</li>
+        <li>已在 22 省开展示范，累积大面积测产</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="h-sub">国情背景</h3>
+      <ul class="subtle" style="margin:0">
+        <li>食用油自给率仅 33%</li>
+        <li>2012 年以来大豆对外依存度 &gt; 80%</li>
+        <li>"大豆油料产能提升工程"是国家长期战略</li>
+        <li>ARC 正切中"减肥增效 + 国家粮食安全"双主题</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="h-sub">产业化进展</h3>
+      <ul class="subtle" style="margin:0">
+        <li>"高富专 ARC 菌剂专用肥"由新洋丰生产</li>
+        <li>年产能 10 万吨+</li>
+        <li>转化协议金额 6800 万元（含新洋丰、中亿等）</li>
+        <li>新洋丰 2024 新型肥料销量 138 万吨</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="h-sub">知识产权与标准</h3>
+      <ul class="subtle" style="margin:0">
+        <li>李培武团队 42 项中国发明专利、11 项欧美日专利</li>
+        <li>40+ 项国家与行业标准</li>
+        <li>255 篇论文（111 篇 SCI）</li>
+        <li>ARC 产品已取得农业农村部肥料登记证</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="h-sub">主推技术规程</h3>
+      <ul class="subtle" style="margin:0">
+        <li>2023 入选全国主推技术（粮油作物组）</li>
+        <li>2024 入选十大重大引领性技术</li>
+        <li>《全国大豆油料提产能农技行动专刊》多期入文</li>
+        <li>南方大豆根瘤菌施用技术指导（已制定）</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =============== SOURCES =============== -->
+<section id="sources">
+  <div class="chapter-no">附录 B ／ 参考</div>
+  <h1 class="h-page">资料来源与方法</h1>
+  <p class="lede">本站所有判断都建立在公开信息 + 内部资料整合之上。下面是核心引用清单。</p>
+
+  <h2 class="h-sec">中央政策文件</h2>
+  <ul class="subtle">
+    <li><strong>2026 年中央一号文件</strong>（2026.02.03 发布，"粮油作物大面积单产提升行动"）</li>
+    <li><a href="https://m.12371.gov.cn/content/2025-02/23/content_484970.html" style="color:var(--blue)">2025 年中央一号文件全文</a> · 2025.02.23</li>
+    <li><a href="http://www.moa.gov.cn/ztzl/zhnyzxd/jsqy/202411/t20241121_6466664.htm" style="color:var(--blue)">农业农村部办公厅关于推介发布 2024 年农业主导品种主推技术的通知</a></li>
+    <li><a href="https://www.moa.gov.cn/govpublic/KJJYS/202502/t20250214_6469956.htm" style="color:var(--blue)">全国农业科技创新重点领域（2024-2028 年）</a></li>
+    <li><a href="https://www.moa.gov.cn/govpublic/KJJYS/202507/t20250731_6476182.htm" style="color:var(--blue)">2022-2024 年度全国农牧渔业丰收奖申报工作通知</a></li>
+    <li><a href="https://www.gov.cn/zhengce/zhengceku/202409/content_6977249.htm" style="color:var(--blue)">国务院 · 关于扩大大豆完全成本保险范围的通知</a> · 2024.09</li>
+  </ul>
+
+  <h2 class="h-sec">省级文件</h2>
+  <ul class="subtle">
+    <li><a href="https://nynct.hlj.gov.cn/nynct/c115422/202504/c00_31826763.shtml" style="color:var(--blue)">2025 年黑龙江省大豆根瘤菌菌剂接种技术示范推广项目实施方案</a></li>
+    <li><strong>2026 年黑龙江省大豆根瘤菌菌剂接种技术示范推广项目实施方案</strong>（6 元/亩补贴续作）</li>
+    <li><a href="http://nync.shandong.gov.cn/zwgk/tzgg/tfwj/202404/t20240425_4722132.html" style="color:var(--blue)">山东省 · 2024 年全省花生大面积单产提升技术意见</a></li>
+    <li><a href="https://nyt.hubei.gov.cn/zfxxgk/zc_GK2020/qtzdgkwj_GK2020/tz/202503/t20250311_5568258.shtml" style="color:var(--blue)">湖北省 · 2025 年度农业主推技术指南</a></li>
+  </ul>
+
+  <h2 class="h-sec">ARC / 李培武团队相关报道</h2>
+  <ul class="subtle">
+    <li><a href="http://www.dangwei.moa.gov.cn/xxyd/202505/t20250515_6473984.htm" style="color:var(--blue)">农业农村部党委 · 全国先进工作者李培武 (2025.05.15)</a></li>
+    <li><a href="https://www.cae.cn/cae/html/main/col2263/2024-05/30/20240530161328020388864_1.html" style="color:var(--blue)">中国工程院 · ARC 技术：守护"油瓶子"安全</a></li>
+    <li><a href="https://app.xinhuanet.com/news/article.html?articleId=6e3182db3811e9ee3d9853ed78a93ce9" style="color:var(--blue)">新华网 · ARC 技术亮相中关村论坛</a></li>
+    <li><a href="https://dmrp.caas.cn/kyjz/b0135800647d450ea63b59eefb2af42f.htm" style="color:var(--blue)">中国农业科学院 · ARC 技术守护油瓶子安全</a></li>
+    <li><a href="https://www.caas.cn/xwzx/mtxw/34db13ef5773438bbd524baad75c9faf.htm" style="color:var(--blue)">农民日报 · 河南兰考 ARC 耦合技术助力花生保丰收</a></li>
+    <li><a href="https://news.hexun.com/2023-09-06/210056670.html" style="color:var(--blue)">"花生 ARC 菌剂控毒固氮提质增产关键技术"测产观摩会</a></li>
+    <li><a href="https://www.most.gov.cn/ztzl/gjkxjsjldh/jldh2015/jldh15jlgg/201601/t20160106_123344.html" style="color:var(--blue)">科技部 · 2015 国家技术发明奖获奖项目</a>（黄曲霉毒素检测）</li>
+  </ul>
+
+  <h2 class="h-sec">人物 / 机构信息</h2>
+  <ul class="subtle">
+    <li><a href="https://baike.baidu.com/item/%E6%9D%8E%E5%9F%B9%E6%AD%A6/10704337" style="color:var(--blue)">李培武 · 百度百科</a></li>
+    <li><a href="https://www.caas.cn/rcjy1/zjxz/ys/a/302635.html" style="color:var(--blue)">中国农业科学院 · 李培武院士主页</a></li>
+    <li><a href="https://gs.caas.cn/szdw1/ysfc/233430.htm" style="color:var(--blue)">中国农业科学院研究生院 · 李培武</a></li>
+    <li><a href="https://ysg.ckcest.cn/html/details/8139/index.html" style="color:var(--blue)">中国工程院院士馆 · 李培武</a></li>
+    <li><a href="https://news.sciencenet.cn/htmlnews/2019/8/427185.shtm" style="color:var(--blue)">李培武 2019 年中国工程院院士增选</a></li>
+    <li><a href="https://caas.teacher.360eol.com/teacherBasic/preview?teacherId=8218" style="color:var(--blue)">中国农业科学院导师库 · 张奇</a></li>
+    <li><a href="https://ocri.caas.cn/" style="color:var(--blue)">中国农业科学院油料作物研究所 官网</a></li>
+    <li><a href="https://www.natesc.org.cn/" style="color:var(--blue)">全国农技推广中心 官网</a></li>
+  </ul>
+
+  <h2 class="h-sec">新洋丰 (000902) 财务 / 公告</h2>
+  <ul class="subtle">
+    <li><a href="https://www.yonfer.com/" style="color:var(--blue)">新洋丰农业科技 官网</a></li>
+    <li><a href="https://www.yonfer.com/news/article/21514" style="color:var(--blue)">新洋丰 · 与中国农科院油料所开启战略合作</a></li>
+    <li><a href="https://data.eastmoney.com/notices/detail/000902/AN202504171657908616.html" style="color:var(--blue)">新洋丰 2024 年年度报告</a>（东方财富）</li>
+    <li><a href="http://static.cninfo.com.cn/finalpage/2025-08-08/1224424790.PDF" style="color:var(--blue)">新洋丰 2025 年半年度报告</a>（巨潮资讯，PDF）</li>
+    <li><a href="http://static.cninfo.com.cn/finalpage/2025-10-27/1224732752.PDF" style="color:var(--blue)">新洋丰 2025 年第三季度报告</a>（巨潮资讯，PDF）</li>
+    <li><a href="https://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpManager/stockid/000902.phtml" style="color:var(--blue)">新洋丰 高管名单</a>（新浪财经）</li>
+  </ul>
+
+  <h2 class="h-sec">方法说明</h2>
+  <p class="subtle">本研究 2026.04.23 第一轮由 4 个并行调研子任务完成；2026.04.24 进行第二轮全面事实核实，新增 3 个并行核实子任务（人物 / 企业 / 政策）：</p>
+  <ol class="subtle">
+    <li><strong>资料提取</strong>：从 8 份内部文件（PPTX/DOCX/XLSX/PDF）中抽取技术参数、合作条款、人物网络</li>
+    <li><strong>政策线调研</strong>：20 次 WebSearch + 第二轮 15 次复核（2026 一号文件、各省最新文件）</li>
+    <li><strong>荣誉线调研</strong>：15 次 WebSearch + 第二轮人物核实补全李培武所有荣誉（2024 五一奖章、2025 先进工作者、中华农业英才奖、中国专利奖等）</li>
+    <li><strong>人物线调研</strong>：25+ 次 WebSearch + 第二轮 16 次人物核实（油料所所长黄凤洪、张奇 27 项专利、新洋丰 5 位高管全名单）</li>
+    <li><strong>新洋丰核实</strong>：第二轮 12 次企业财务核实，纠正"研发投入"重大数字错误（2.44 亿，不是 24.35 亿），补充 2025 H1 / Q3 业绩</li>
+  </ol>
+  <p class="subtle"><strong>已确认未能查实的信息</strong>：</p>
+  <ul class="subtle">
+    <li>李培武是否担任全国政协委员或人大代表（公开搜索无结果，可能为省级或暂无）</li>
+    <li>李培武在 ISM、木本油料资源利用全国重点实验室学术委员会的具体身份</li>
+    <li>沈俊和阿可生物的工商注册详情（需通过企业信用信息系统查询）</li>
+    <li>新洋丰对 ARC 业务的累计投资额、ARC 复合肥单项销量收入（年报未单独披露）</li>
+    <li>2025 年兰考考城镇 ARC 示范田秋收数据（暂未公开）</li>
+  </ul>
+  <p class="subtle">所有标"判断"开头的内容为推论，未必是已确认事实。如发现错漏，请直接修改。</p>
+  <p class="subtle"><strong>关于内部商业化结构</strong>：沈俊（院士秘书 + 阿可生物法人）、王女士（外部菌剂厂）等信息基于内部知情确认，不依赖公开搜索结果。这些信息构成本报告"内部商业化结构"分析的事实基础。</p>
+
+  <hr class="soft">
+  <p class="subtle muted" style="text-align:center;margin-top:24px">
+  ARC 项目生态分析 v3.2 · 2026.04.24（含 15 省全面调研 + 油料所新所长更迭）<br>
+  本站为单文件 HTML，可离线打开、可任意复制、可二次编辑。
+  </p>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ============ Map · 悬停提示 (省份直接内联在 SVG 中) ============ */
+const mapSvg = document.getElementById("chinaMap");
+const tipEl  = document.getElementById("provTip");
+if(mapSvg && tipEl){
+  const provs = mapSvg.querySelectorAll(".province");
+  provs.forEach(p=>{
+    p.addEventListener("mouseenter",()=>{
+      p.setAttribute("stroke","#b45309");
+      p.setAttribute("stroke-width","2.2");
+      tipEl.innerHTML = p.getAttribute("data-tip");
+      tipEl.style.display = "block";
+    });
+    p.addEventListener("mousemove",e=>{
+      const wrap = mapSvg.parentElement.getBoundingClientRect();
+      const tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
+      let x = e.clientX - wrap.left + 16;
+      let y = e.clientY - wrap.top + 16;
+      if(x + tw > wrap.width) x = e.clientX - wrap.left - tw - 12;
+      if(y + th > wrap.height) y = e.clientY - wrap.top - th - 12;
+      tipEl.style.left = x + "px";
+      tipEl.style.top  = y + "px";
+    });
+    p.addEventListener("mouseleave",()=>{
+      p.setAttribute("stroke","rgba(20,16,12,.06)");
+      p.setAttribute("stroke-width","0.8");
+      tipEl.style.display = "none";
+    });
+  });
+}
+
+/* ============ Sidebar nav 高亮 ============ */
+const navItems = document.querySelectorAll(".nav-item");
+const sections = Array.from(document.querySelectorAll("section[id]"));
+function setActive(id){
+  navItems.forEach(a=>{
+    const href = a.getAttribute("href").replace("#","");
+    a.classList.toggle("active", href === id);
+  });
+}
+navItems.forEach(a=>a.addEventListener("click",()=>setActive(a.getAttribute("href").replace("#",""))));
+function onScroll(){
+  let activeId = sections[0].id;
+  const top = window.scrollY + 140;
+  for(const s of sections){if(s.offsetTop <= top) activeId = s.id;}
+  setActive(activeId);
+}
+window.addEventListener("scroll", onScroll, {passive:true});
+</script>
+
+</body>
+</html>
